@@ -2411,6 +2411,30 @@ hr.soft{
   color: inherit;
 }
 </style>
+<style>
+
+/* === NOTLAR Butonu – Turuncu ŞERİDİN ÜZERİNDE ve ÜSTÜNDE sabit === */
+.fixedNotesBar{
+  position: fixed;
+  left: var(--inset);
+  right: var(--inset);
+  bottom: var(--inset);
+  z-index: 10002; /* frame (9999) üstünde */
+  display: flex;
+  justify-content: center;
+  pointer-events: none; /* wrapper tıklanmaz */
+}
+.fixedNotesBar .notesEntry{
+  pointer-events: auto; /* sadece buton tıklanır */
+  transform: translateY(-50%); /* şeridin tam üstüne çıkar */
+}
+
+/* İçerik alttan gizlenmesin diye boşluk */
+.scrollArea{
+  padding-bottom: 120px !important;
+}
+
+</style>
 </head>
 
 <body>
@@ -2447,11 +2471,13 @@ hr.soft{
         </div>
 
 
-        <div class="notesEntry">
+        <div class="fixedNotesBar">
+  <div class="notesEntry">
           <button class="notesBtn" id="notesBtn" type="button" onclick="window.__openNotes && window.__openNotes()">
             NOTLAR <span class="notesDot" id="notesDot"></span>
           </button>
         </div>
+</div><!--fixedNotesBar-->
 
         <div class="hint">
           • Ana sayfa temiz: sadece dersler görünür.<br>
