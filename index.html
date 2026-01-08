@@ -2411,34 +2411,241 @@ hr.soft{
   color: inherit;
 }
 </style>
+
 <style>
+/* NOTLAR – tablo altı, sol hizalı (satırlarla birlikte kayar) */
+.notesEntry{ justify-content:flex-start; margin-top:10px; margin-left:4px; }
+</style>
 
-/* === NOTLAR Butonu – Turuncu ŞERİDİN ÜZERİNDE ve ÜSTÜNDE sabit === */
-.fixedNotesBar{
-  position: fixed;
-  left: var(--inset);
-  right: var(--inset);
-  bottom: var(--inset);
-  z-index: 10002; /* frame (9999) üstünde */
-  display: flex;
-  justify-content: center;
-  pointer-events: none; /* wrapper tıklanmaz */
+
+<style>
+/* === Ayar Çarkı: Haftalık butonunun yanına (inline) === */
+.modeToggle{ align-items:center; }
+.modeToggle .settingsBtn{
+  position: static !important;
+  inset: auto !important;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  margin-left: 6px;
+  flex: 0 0 auto;
 }
-.fixedNotesBar .notesEntry{
-  pointer-events: auto; /* sadece buton tıklanır */
-  transform: translateY(-50%); /* şeridin tam üstüne çıkar */
+</style>
+
+
+<style>
+/* === Ayar Çarkı küçültme === */
+.modeToggle .settingsBtn{
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 10px !important;
+  font-size: 16px !important;
+  margin-left: 6px;
+  padding: 0 !important;
+}
+</style>
+
+
+<style id="day-mode-fix">
+/* === GÜNDÜZ MODU OKUNABİLİRLİK FIX (geceyi bozmaz) === */
+
+/* Başlık: gündüzde beyaz kalmasın */
+body.theme-day .appTitle{ color: var(--text) !important; }
+body.theme-day .appTitle .accent{ color: var(--orange) !important; }
+
+/* Üst bar: gündüz değişkenlerini kullan */
+body.theme-day .topbar{
+  background: linear-gradient(to bottom, var(--topbar1), var(--topbar2), var(--topbar3)) !important;
 }
 
-/* İçerik alttan gizlenmesin diye boşluk */
-.scrollArea{
-  padding-bottom: 120px !important;
+/* Günlük tablo yazıları: güvenli şekilde koyulaştır */
+body.theme-day .tableCard,
+body.theme-day .tableHeader,
+body.theme-day .row,
+body.theme-day .lesson,
+body.theme-day .time,
+body.theme-day .muted,
+body.theme-day .noteCard{
+  color: var(--text) !important;
+}
+body.theme-day .time,
+body.theme-day .hint,
+body.theme-day .notesItemMeta,
+body.theme-day .settingsHint{
+  color: var(--timeText) !important;
+}
+
+/* Haftalık tablo (weekGrid) – her tarayıcıda görünürlük */
+body.theme-day #weeklyGridWrap,
+body.theme-day table.weekGrid,
+body.theme-day .weekGrid th,
+body.theme-day .weekGrid td,
+body.theme-day .wCls,
+body.theme-day .wLes,
+body.theme-day .tNo,
+body.theme-day .tTime{
+  color: var(--text) !important;
+}
+body.theme-day .weekGrid th{
+  color: rgba(11,18,32,0.72) !important;
+}
+body.theme-day .weekGrid td{
+  color: rgba(11,18,32,0.92) !important;
+}
+
+/* Bazı eski sınıflar (light / light-mode / day-mode) yüzünden çakışma olursa: theme-day üstün gelsin */
+body.theme-day .weeklyTable th,
+body.theme-day .weeklyTable td,
+body.theme-day .weeklyTable td *,
+body.theme-day .weeklyTable th *{
+  color: rgba(11,18,32,0.92) !important;
+}
+
+
+/* Günlük (gündüz): Sınıf alanı yazısı beyaz kalmasın */
+body.theme-day .class{ color: var(--text) !important; }
+
+
+
+/* GÜNDÜZ: Ders isimleri turuncu (geceyle aynı vurgu) */
+body.theme-day .lesson{
+  color: var(--orange) !important;
+  font-weight: 1000;
+}
+
+
+
+/* GÜNDÜZ: NOTLAR butonu dış çizgisi siyah olsun (daha net) */
+body.theme-day .notesBtn{
+  border-color: rgba(0,0,0,0.55) !important;
+  color: rgba(11,18,32,0.95) !important;
+}
+body.theme-day .notesBtn:active{
+  border-color: rgba(0,0,0,0.75) !important;
 }
 
 </style>
+
+
+<style>
+/* === GÜNDÜZ/GEC E: Tablo başlık şeridi transparan olmasın, altı görünmesin === */
+
+/* Günlük tablo başlığı */
+.tableHeader{
+  background: var(--card) !important;      /* opak kart rengi */
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Eğer sticky kullanılıyorsa üstten kayarken alttakini göstermesin */
+.tableHeader.sticky,
+.sticky .tableHeader{
+  background: var(--card) !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+/* Gündüz modunda daha açık opak zemin */
+body.theme-day .tableHeader{
+  background: rgba(245,247,250,1) !important;
+}
+
+/* Haftalık başlıklar */
+.weekGrid th,
+.weekHeader,
+.weekHead{
+  background: var(--card) !important;
+  backdrop-filter: none !important;
+}
+body.theme-day .weekGrid th,
+body.theme-day .weekHeader,
+body.theme-day .weekHead{
+  background: rgba(245,247,250,1) !important;
+}
+
+/* Güvenlik: herhangi bir blur/opacity kalıntısı varsa sıfırla */
+.tableHeader, .weekGrid th{
+  opacity: 1 !important;
+}
+</style>
+
+
+<style>
+/* === ÜST ŞERİT ALTINA GİREN YAZILAR GÖRÜNMESİN (GÜNDÜZ+GECE) === */
+.topbar{
+  background: rgba(11,18,32,1) !important;   /* GECE: opak */
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  position: sticky;
+  z-index: 2000 !important;
+}
+/* GÜNDÜZ: opak açık zemin */
+body.theme-day .topbar{
+  background: rgba(245,247,250,1) !important;
+}
+
+/* Topbar alt kenarında şeffaflık/gradient kalıntısı varsa kapat */
+.topbar{ position: sticky; }
+.topbar::after{
+  content:"";
+  position:absolute;
+  left:0; right:0;
+  bottom:-18px;
+  height:18px;
+  background: inherit;
+}
+
+/* Başlık satırı (SINIF/DERS/SAAT) yukarı çıkınca topbar altında görünmesin */
+.tableHeader{
+  z-index: 1500 !important;
+}
+</style>
+
+
+<style>
+/* === ÜSTTEKİ SİYAH ÇİZGİYİ KALDIR, ALTTAKİ TURUNCU ÇİZGİYİ BELİRGİNLEŞTİR === */
+
+/* Siyah çizgi (border / hr / pseudo) ne varsa kapat */
+.topbar, .topbar *{
+  border-top: none !important;
+  border-bottom: none !important;
+}
+.topbar::before, .topbar::after{
+  box-shadow: none !important;
+}
+
+/* Eğer ayrı bir divider varsa kapat */
+.divider, .topDivider, .headerDivider{
+  display: none !important;
+}
+
+/* Gün başlıklarının altındaki turuncu çizgi */
+.dayTabs, .daysRow{
+  position: relative;
+}
+.dayTabs::after, .daysRow::after{
+  content: "";
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: -8px;
+  height: 3px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--orange), #ff9b33);
+  box-shadow: 0 2px 6px rgba(255,122,0,0.45);
+}
+
+/* Gündüz modunda daha net görünsün */
+body.theme-day .dayTabs::after,
+body.theme-day .daysRow::after{
+  background: linear-gradient(90deg, var(--orange), #ff8a00);
+  box-shadow: 0 2px 8px rgba(255,122,0,0.55);
+}
+</style>
+
 </head>
 
 <body>
-<button id="btnSettings" class="settingsBtn" type="button" aria-label="Ayarlar" title="Ayarlar">⚙️</button>
+
 
   <div class="app">
     <div class="scrollArea">
@@ -2449,7 +2656,9 @@ hr.soft{
         <div class="modeToggle" role="tablist" aria-label="Yayın modu">
           <button class="modeBtn active" id="modeDaily" type="button">GÜNLÜK</button>
           <button class="modeBtn" id="modeWeekly" type="button">HAFTALIK</button>
-        </div>
+        
+    <button id="btnSettings" class="settingsBtn" type="button" aria-label="Ayarlar" title="Ayarlar">⚙️</button>
+</div>
 
         <div class="dayTabs" id="dayTabs" aria-label="Günler">
           <button class="dayTab active" data-day="0" type="button">Pazartesi</button>
@@ -2471,19 +2680,16 @@ hr.soft{
         </div>
 
 
-        <div class="fixedNotesBar">
-  <div class="notesEntry">
+        <div id="dailyFooterTpl" style="display:none;">
+<div class="notesEntry">
           <button class="notesBtn" id="notesBtn" type="button" onclick="window.__openNotes && window.__openNotes()">
             NOTLAR <span class="notesDot" id="notesDot"></span>
           </button>
         </div>
-</div><!--fixedNotesBar-->
-
-        <div class="hint">
-          • Ana sayfa temiz: sadece dersler görünür.<br>
-          • Ders satırına <b>basılı tut</b> → ilk not/ödev/sınav girişini açar.<br>
+<div class="hint">          • Ders satırına <b>basılı tut</b> → ilk not/ödev/sınav girişini açar.<br>
           • Turuncu <b>nokta</b> varsa dokun → kayıtlı bilgi sayfasını açar.
         </div>
+</div>
       </div>
 
       <!-- HAFTALIK (sonraki aşama) -->
@@ -2816,6 +3022,16 @@ hr.soft{
       });
 
       page.appendChild(card);
+
+      // NOTLAR + küçük yardım yazıları: tablo altına ekle (satırlarla birlikte kayar)
+      const ft = document.getElementById("dailyFooterTpl");
+      if(ft){
+        const clone = ft.cloneNode(true);
+        clone.removeAttribute("id");
+        clone.style.display = "";
+        page.appendChild(clone);
+      }
+
       return page;
     }
 
