@@ -3132,23 +3132,18 @@ body.theme-day .dayTab.active{
     // - Sınav tarihi bugünden itibaren 0..2 gün içinde => nokta ON
     function shouldShowDot(dayIndex, id, store){
       // SATIR BAŞI TURUNCU NOKTA:
-      // - Bu ders için ÖDEV veya NOT varsa: her zaman göster
-      // - Sınav tarihi varsa ve 0–2 gün kaldıysa: göster
+      // Bu satıra ait kayıtta (Ödev / Not / Sınav Tarihi / Sınav Notu) herhangi biri doluysa göster.
+      // Not: Gün indexi burada sadece anahtar üretimi için kullanılıyor; kural satır bazlıdır.
       const item = store && store[id];
       if(!item) return false;
 
-      const hasHomeworkOrNote =
-        (item.homework && String(item.homework).trim()) ||
-        (item.note && String(item.note).trim());
-
-      if(hasHomeworkOrNote) return true;
-
-      if(item.examDate){
-        const diff = daysBetween(ymd(new Date()), String(item.examDate).trim());
-        if(diff !== null && diff >= 0 && diff <= 2) return true;
-      }
-      return false;
+      const hw  = item.homework != null ? String(item.homework).trim() : "";
+      const nt  = item.note != null ? String(item.note).trim() : "";
+      const ex  = item.examDate != null ? String(item.examDate).trim() : "";
+      const exn = item.examNote != null ? String(item.examNote).trim() : "";
+      return !!(hw || nt || ex || exn);
     }
+
 
     /***********************
      * UI: Sayfaları oluştur
@@ -3191,7 +3186,15 @@ body.theme-day .dayTab.active{
         // Dot tıklanınca bilgi sayfası
         dotBtn.addEventListener("click", (e)=>{
           e.stopPropagation();
-          openView(id, dayIndex, r);
+          // Eğer bu satırın kendi kaydı varsa onu aç
+          let store = {};
+          try{ store = loadStore(); }catch(err){ store = {}; }
+          if(shouldShowDot(dayIndex, id, store)){
+            openView(id, dayIndex, r);
+            return;
+          }
+          // Nokta "dersin ilk satırı" için yandıysa: NOTLAR panelini aç (kayıt orada)
+          if(window.__openNotes) window.__openNotes();
         });
 
         // Satır uzun bas: ilk giriş
@@ -3259,63 +3262,75 @@ body.theme-day .dayTab.active{
     };
 
     function refreshDots(){
-      // SADECE NOKTALARI GÜNCELLE (linkleri etkileme)
+      // Nokta kuralı:
+      // - Bir ders için herhangi bir yerde (ödev/not/sınav tarihi/sınav notu) kayıt varsa
+      // - O dersin bulunduğu HER GÜNDE sadece "ilk satırında" nokta görünür.
       let store = {};
       try{ store = loadStore(); }catch(e){ store = {}; }
 
-      // 1) Herhangi bir günde kaydı olan dersler
+      // 1) Kayıt olan ders adları
       const lessonsWithRecord = new Set();
       try{
         Object.keys(store||{}).forEach(id=>{
           const it = store[id];
           if(!it) return;
-          const hasText = (it.homework && String(it.homework).trim()) || (it.note && String(it.note).trim());
-          const hasExam = it.examDate && String(it.examDate).trim();
+          const hw  = it.homework != null ? String(it.homework).trim() : "";
+          const nt  = it.note != null ? String(it.note).trim() : "";
+          const ex  = it.examDate != null ? String(it.examDate).trim() : "";
+          const exn = it.examNote != null ? String(it.examNote).trim() : "";
           const lesson = it.meta && it.meta.lesson ? String(it.meta.lesson).trim() : "";
-          if(lesson && (hasText || hasExam)) lessonsWithRecord.add(lesson);
+          const cls = it.meta && it.meta.cls ? String(it.meta.cls).trim() : "";
+          const key = (cls ? (cls + "||" + lesson) : lesson);
+          if(lesson && (hw || nt || ex || exn)) lessonsWithRecord.add(key);
         });
       }catch(e){}
 
-      // 2) Bu sayfadaki her ders için "o günün ilk dersi" numarası
-      const firstNoByLesson = {};
+      // 2) Gün+ders bazında o günün ilk ders no'su
+      const firstNoByDayLesson = {};
       try{
         document.querySelectorAll(".row").forEach(row=>{
+          const day = row.dataset ? Number(row.dataset.day) : NaN;
+          if(!Number.isFinite(day)) return;
           const lessonEl = row.querySelector(".lesson");
+          const clsEl = row.querySelector(".class");
           const noEl = row.querySelector(".no");
           if(!lessonEl || !noEl) return;
           const lesson = String(lessonEl.textContent||"").trim();
+          const cls = clsEl ? String(clsEl.textContent||"").trim() : "";
+          const key = (cls ? (cls + "||" + lesson) : lesson);
           const no = parseInt(String(noEl.textContent||"").trim(), 10);
           if(!lesson || !Number.isFinite(no)) return;
-          if(firstNoByLesson[lesson]==null || no < firstNoByLesson[lesson]) firstNoByLesson[lesson]=no;
+          if(!firstNoByDayLesson[day]) firstNoByDayLesson[day] = {};
+          const cur = firstNoByDayLesson[day][key];
+          if(cur == null || no < cur) firstNoByDayLesson[day][key] = no;
         });
       }catch(e){}
 
-      // 3) Noktaları yak
+      // 3) Noktaları uygula
       try{
         document.querySelectorAll(".row").forEach(row=>{
-          const id = row.dataset ? row.dataset.id : null;
-          const day = row.dataset ? Number(row.dataset.day) : NaN;
           const dot = row.querySelector(".dot");
-          if(!dot || !id) return;
+          if(!dot) return;
 
-          const own = shouldShowDot(day, id, store);
-          if(own){
-            dot.classList.add("on");
-            return;
-          }
-
+          const day = row.dataset ? Number(row.dataset.day) : NaN;
           const lessonEl = row.querySelector(".lesson");
+          const clsEl = row.querySelector(".class");
           const noEl = row.querySelector(".no");
           const lesson = lessonEl ? String(lessonEl.textContent||"").trim() : "";
           const no = noEl ? parseInt(String(noEl.textContent||"").trim(), 10) : NaN;
 
-          const cross = lesson && Number.isFinite(no) && firstNoByLesson[lesson] === no && lessonsWithRecord.has(lesson);
-          dot.classList.toggle("on", !!cross);
+          const cls = clsEl ? String(clsEl.textContent||"").trim() : "";
+          const key = (cls ? (cls + "||" + lesson) : lesson);
+          const firstNo = (Number.isFinite(day) && firstNoByDayLesson[day]) ? firstNoByDayLesson[day][key] : null;
+          const show = !!(lesson && lessonsWithRecord.has(key) && Number.isFinite(no) && firstNo != null && firstNo === no);
+
+          dot.classList.toggle("on", show);
         });
       }catch(e){}
     }
 
     /***********************
+**
      * NOTLAR (liste + filtre)
      ************************/
     const notesBtn = document.querySelector(".notesBtn");
