@@ -1,11 +1,85 @@
+<!DOCTYPE html>
 
-<!doctype html>
 <html lang="tr">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>DERS-TAKİP</title>
-  <style>
+<style id="notes-close-move">
+  /* Notlar filtresi satırında Kapat sağa hizalı */
+  #notesOverlay .filters{
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  #notesOverlay .filters #btnNotesClose{
+    margin-left:auto;
+    padding: 10px 16px;
+    border-radius: 16px;
+  }
+</style>
+<style id="notes-close-inline">
+#notesOverlay .filtersRow,
+#notesOverlay .notesFilters,
+#notesOverlay .filterRow{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+#notesOverlay .notesActions{
+  margin-left:auto;
+  display:flex;
+  gap:8px;
+}
+</style>
+<style id="notes-minihelp-style-safe">
+/* Notlar ekranı başlığının yanına küçük açıklamalar */
+#notesOverlay .notesMiniHelp{
+  margin-left: 10px;
+  font-size: 12px;
+  line-height: 1.25;
+  opacity: 0.85;
+  max-width:  240px;
+  margin-top: 2px;
+  color: rgba(255,255,255,0.85);
+  flex: 1 1 220px;
+  
+}
+@media (max-width: 420px){
+  #notesOverlay .notesMiniHelp{ font-size: 11px; max-width: 200px; }
+}
+/* Başlık satırını esnek hizala */
+#notesOverlay .sheetTop,
+#notesOverlay .sheetHeader,
+#notesOverlay .notesHeader{
+  display:flex;
+  align-items:flex-start;
+  justify-content:flex-start;
+  gap:12px;
+  flex-wrap:wrap;
+}
+
+#notesOverlay .sheetTitle,
+#notesOverlay .notesTitle{
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+</style>
+<style id="center-active-days-head">
+  .dayTabs, #dayTabs, .daysRow, #daysRow, .dayRow, #dayRow{
+    display:flex !important;
+    justify-content:center !important;
+    align-items:center !important;
+    gap:8px !important;
+    width:100% !important;
+    margin-left:auto !important;
+    margin-right:auto !important;
+  }
+  .dayTabs{ overflow-x:auto; scrollbar-width:none; }
+  .dayTabs::-webkit-scrollbar{ display:none; }
+  .dayTab{ flex:0 0 auto !important; }
+  </style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>DERS-TAKİP</title>
+<style>
     :root{
       --orange:#ff7a00;
       --bg:#0b1220;
@@ -32,10 +106,10 @@
 :root{
   --uiScale: 1; /* 1=Orta */
 }
-body.text-small{ --uiScale: 0.90; }
+body.text-small{ --uiScale: 0.82; }
 body.text-medium{ --uiScale: 1; }
-body.text-large{ --uiScale: 1.14; }
-body.text-xlarge{ --uiScale: 1.26; }
+body.text-large{ --uiScale: 1.22; }
+body.text-xlarge{ --uiScale: 1.40; }
 
 /* Genel */
 .app{ font-size: calc(14px * var(--uiScale)); }
@@ -448,7 +522,7 @@ html, body{
 
     button{ -webkit-tap-highlight-color: transparent; }
   
-    /* NOTLAR butonu (günlük tablonun altında, sol altta) */
+    /* NOTLAR <div class="notesHelpStack"><div class="notesHelpLine">Ders satırına basılı tut → ilk not/ödev/sınav girişini açar.</div><div class="notesHelpLine">Turuncu nokta varsa dokun → kayıtlı bilgi sayfasını açar.</div></div> butonu (günlük tablonun altında, sol altta) */
     .notesEntry{
       display:flex;
       justify-content:flex-start;
@@ -1391,7 +1465,6 @@ hr.soft{
 .left-gutter{padding-left:2px}
 
 </style>
-
 <style>
 /* Haftalık - Gündüz modunda yazılar siyah (gün etiketleri hariç) */
 body.light .weekly-table,
@@ -1443,8 +1516,6 @@ body.day-mode .weekly-table td .lesson-name {
 .left-gutter{padding-left:2px}
 
 </style>
-
-
 <style>
 /* FORCE: Weekly lesson names black in DAY mode */
 body.light-mode .weekly-table .lesson,
@@ -1479,7 +1550,6 @@ body.light-mode .weekly-table .cell .lesson {
 .left-gutter{padding-left:2px}
 
 </style>
-
 <style id="settings-new">
 
 /* ===== Yeni Ayarlar Sayfası (Overlay) ===== */
@@ -2423,13 +2493,10 @@ hr.soft{
   color: inherit;
 }
 </style>
-
 <style>
 /* NOTLAR – tablo altı, sol hizalı (satırlarla birlikte kayar) */
 .notesEntry{ justify-content:flex-start; margin-top:10px; margin-left:4px; }
 </style>
-
-
 <style>
 /* === Ayar Çarkı: Haftalık butonunun yanına (inline) === */
 .modeToggle{ align-items:center; }
@@ -2443,8 +2510,6 @@ hr.soft{
   flex: 0 0 auto;
 }
 </style>
-
-
 <style>
 /* === Ayar Çarkı küçültme === */
 .modeToggle .settingsBtn{
@@ -2456,8 +2521,6 @@ hr.soft{
   padding: 0 !important;
 }
 </style>
-
-
 <style id="day-mode-fix">
 /* === GÜNDÜZ MODU OKUNABİLİRLİK FIX (geceyi bozmaz) === */
 
@@ -2537,8 +2600,6 @@ body.theme-day .notesBtn:active{
 }
 
 </style>
-
-
 <style>
 /* === GÜNDÜZ/GEC E: Tablo başlık şeridi transparan olmasın, altı görünmesin === */
 
@@ -2579,8 +2640,6 @@ body.theme-day .weekHead{
   opacity: 1 !important;
 }
 </style>
-
-
 <style>
 /* === ÜST ŞERİT ALTINA GİREN YAZILAR GÖRÜNMESİN (GÜNDÜZ+GECE) === */
 .topbar{
@@ -2611,8 +2670,6 @@ body.theme-day .topbar{
   z-index: 1500 !important;
 }
 </style>
-
-
 <style>
 /* === ÜSTTEKİ SİYAH ÇİZGİYİ KALDIR, ALTTAKİ TURUNCU ÇİZGİYİ BELİRGİNLEŞTİR === */
 
@@ -2653,8 +2710,6 @@ body.theme-day .daysRow::after{
   box-shadow: 0 2px 8px rgba(255,122,0,0.55);
 }
 </style>
-
-
 <style id="day-button-outlines">
 /* === Gündüz modu: buton dış hatları (gece modundaki gibi belirgin) === */
 body.theme-day .modeBtn,
@@ -2694,8 +2749,6 @@ body.theme-day .settingsBtn{
   box-shadow: inset 0 0 0 1px rgba(52,64,84,0.06), 0 6px 16px rgba(16,24,40,0.06) !important;
 }
 </style>
-
-
 <style id="compact-day-tabs">
 /* === Gün butonlarını küçült: 5 gün rahat sığsın === */
 .dayTab{
@@ -2712,8 +2765,6 @@ body.theme-day .settingsBtn{
   }
 }
 </style>
-
-
 <style id="compact-topbar-all">
 /* === Üst alan genel küçültme (DERS-TAKİP, Günlük/Haftalık, Ayar) === */
 .appTitle{
@@ -2762,8 +2813,6 @@ body.theme-day .settingsBtn{
   }
 }
 </style>
-
-
 <style id="topbar-spacing-fix">
 /* === Başlık ile Günlük/Haftalık arası mesafe artır === */
 .appTitle{
@@ -2774,8 +2823,6 @@ body.theme-day .settingsBtn{
   margin-top: 6px !important;
 }
 </style>
-
-
 <style id="topbar-spacing-fix-2">
 /* === Başlık ile Günlük/Haftalık arası mesafe biraz daha artırıldı === */
 .appTitle{
@@ -2845,151 +2892,215 @@ body.theme-day .dayTab.active{
 }
 
 </style>
+<style id="notes-help-under-title">
+#notesOverlay .notesHeader,
+#notesOverlay .sheetHeader,
+#notesOverlay .sheetTop{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:6px;
+}
+#notesOverlay .notesHelpStack{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  padding-left:2px;
+}
+#notesOverlay .notesHelpLine{
+  font-size:11px;
+  line-height:1.25;
+  color: rgba(255,255,255,0.88);
+  white-space:normal;
+}
+@media (max-width: 420px){
+  #notesOverlay .notesHelpLine{ font-size:10.5px; }
+}
+</style>
+<style id="notesHelpLayoutFix">
+/* NOTLAR panelindeki açıklama alanı: 2 satır (2 ayrı cümle), satır bölünmesin */
+#notesOverlay .sheetHeader{
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:flex-start !important;
+  justify-content:flex-start !important;
+  gap:6px !important;
+  flex-wrap:nowrap !important;
+}
+#notesOverlay .notesMiniHelp{
+  margin:0 !important;
+  width:100% !important;
+  max-width:none !important;
+  font-size:11.5px;
+  line-height:1.25;
+  color:rgba(255,255,255,0.78);
+}
+#notesOverlay .notesMiniHelp .helpLine{
+  white-space:nowrap;   /* tek satırda kalsın */
+}
+@media (max-width:420px){
+  #notesOverlay .notesMiniHelp{ font-size:11px; }
+}
+</style>
+<style id="hide-bottom-help-strong">
+/* EN ALTTAKİ NOTLAR AÇIKLAMA YAZISINI GİZLE (NOKTA ATIŞI) */
+.notesEntry + .hint,
+.notesEntry + .subhint,
+.notesEntry + .help,
+.notesEntry + .infoText,
+.notesEntry + .notesHelp,
+.notesEntry + .notesHelpStack,
+.notesEntry + div.hint,
+.notesEntry + p.hint,
+.notesEntry + div,
+.notesEntry ~ .hint,
+.notesEntry ~ .notesHelpStack {
+  display: none !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  visibility: hidden !important;
+}
+</style>
+<style id="textsize-boost-patch">
+/* Yazı boyutu etkisini belirginleştir (bozmadan) */
+html{ font-size: calc(16px * var(--uiScale)); }
+body{ font-size: 1rem; }
+
+/* En sık görünen elemanlar */
+button, input, select, textarea{ font-size: 1rem; }
+.small, .hint, .settingsHint{ font-size: calc(0.92rem); }
+h1, .title{ font-size: calc(1.45rem); }
+h2, .sectionTitle{ font-size: calc(1.25rem); }
+
+/* Tablo ve satırlar */
+.tableHeader, .row, .cell, .timeCell, .notesBtn{ font-size: 1rem; }
+
+/* Gün / sekme butonları */
+.tabBtn, .dayBtn, .miniBtn{ font-size: 1rem; }
+</style>
 
 </head>
-
 <body>
-
-
-  <div class="app">
-    <div class="scrollArea">
-
-      <div class="topbar">
-        <div class="appTitle">DERS-<span class="accent">TAKİP</span></div>
-
-        <div class="modeToggle" role="tablist" aria-label="Yayın modu">
-          <button class="modeBtn active" id="modeDaily" type="button">GÜNLÜK</button>
-          <button class="modeBtn" id="modeWeekly" type="button">HAFTALIK</button>
-        
-    <button id="btnSettings" class="settingsBtn" type="button" aria-label="Ayarlar" title="Ayarlar">⚙️</button>
+<div class="app">
+<div class="scrollArea">
+<div class="topbar">
+<div class="appTitle">DERS-<span class="accent">TAKİP</span></div>
+<div aria-label="Yayın modu" class="modeToggle" role="tablist">
+<button class="modeBtn active" id="modeDaily" type="button">GÜNLÜK</button>
+<button class="modeBtn" id="modeWeekly" type="button">HAFTALIK</button>
+<button aria-label="Ayarlar" class="settingsBtn" id="btnSettings" title="Ayarlar" type="button">⚙️</button>
 </div>
-
-        <div class="dayTabs" id="dayTabs" aria-label="Günler">
-          <button class="dayTab active" data-day="0" type="button">Pazartesi</button>
-          <button class="dayTab" data-day="1" type="button">Salı</button>
-          <button class="dayTab" data-day="2" type="button">Çarşamba</button>
-          <button class="dayTab" data-day="3" type="button">Perşembe</button>
-          <button class="dayTab" data-day="4" type="button">Cuma</button>
-          <button class="dayTab" data-day="5" type="button">Cumartesi</button>
-          <button class="dayTab" data-day="6" type="button">Pazar</button>
-        </div>
-      </div>
-
-      <!-- GÜNLÜK -->
-      <div id="dailyWrap">
-        <div class="daySwipe" id="daySwipe">
-          <div class="dayTrack" id="dayTrack">
-            <!-- Sayfalar JS ile doldurulacak -->
-          </div>
-        </div>
-
-
-        <div id="dailyFooterTpl" style="display:none;">
+<div aria-label="Günler" class="dayTabs" id="dayTabs">
+<button class="dayTab active" data-day="0" type="button">Pazartesi</button>
+<button class="dayTab" data-day="1" type="button">Salı</button>
+<button class="dayTab" data-day="2" type="button">Çarşamba</button>
+<button class="dayTab" data-day="3" type="button">Perşembe</button>
+<button class="dayTab" data-day="4" type="button">Cuma</button>
+<button class="dayTab" data-day="5" type="button">Cumartesi</button>
+<button class="dayTab" data-day="6" type="button">Pazar</button>
+</div>
+</div>
+<!-- GÜNLÜK -->
+<div id="dailyWrap">
+<div class="daySwipe" id="daySwipe">
+<div class="dayTrack" id="dayTrack">
+<!-- Sayfalar JS ile doldurulacak -->
+</div>
+</div>
+<div id="dailyFooterTpl" style="display:none;">
 <div class="notesEntry">
-          <button class="notesBtn" type="button" onclick="window.__openNotes && window.__openNotes()">
+<button class="notesBtn" onclick="window.__openNotes &amp;&amp; window.__openNotes()" type="button">
             NOTLAR <span class="notesDot"></span>
-          </button>
-        </div>
-<div class="hint">          • Ders satırına <b>basılı tut</b> → ilk not/ödev/sınav girişini açar.<br>
-          • Turuncu <b>nokta</b> varsa dokun → kayıtlı bilgi sayfasını açar.
+</button>
+</div>
+<div class="hint">          Ders satırına <b>basılı tut</b> → ilk not/ödev/sınav girişini açar.<br/>
+          Turuncu <b>nokta</b> varsa dokun → kayıtlı bilgi sayfasını açar.
         </div>
 </div>
-      </div>
-
-      <!-- HAFTALIK (sonraki aşama) -->
-      <div class="weeklyWrap" id="weeklyWrap">
-        <div id="weeklyGridWrap"></div>
-      </div>
-        </div>
-      </div>
-
-      <div style="height: 120px"></div>
-    </div>
-
-    <div class="frame" aria-hidden="true"></div>
-  </div>
-
-  <!-- Modal: nokta tıkla / uzun bas -->
-  <div class="modalOverlay" id="overlay" aria-hidden="true">
-    <div class="sheet" role="dialog" aria-modal="true" aria-label="Ders notu">
-      <div class="sheetHeader">
-        <div style="min-width:0">
-          <div class="sheetTitle" id="sheetTitle">Ders</div>
-          <div class="muted" id="sheetSub">—</div>
-        </div>
-        <div class="pill" id="sheetMode">BİLGİ</div>
-      </div>
-
-      <div id="viewPanel">
-        <div class="noteCard" style="margin-top:0">
-          <div><b>Ödev</b></div>
-          <div class="muted" id="vHomework">—</div>
-          <div class="hr"></div>
-          <div><b>Not</b></div>
-          <div class="muted" id="vNote">—</div>
-          <div class="hr"></div>
-          <div><b>Sınav</b></div>
-          <div class="muted" id="vExam">—</div>
-        </div>
-
-        <div class="btnRow">
-          <button class="btn" id="btnClose" type="button">Kapat</button>
-          <button class="btn btnPrimary" id="btnEdit" type="button">Düzenle</button>
-        </div>
-      </div>
-
-      <div id="editPanel" style="display:none">
-        <div class="field">
-          <div class="label">ÖDEV</div>
-          <textarea id="iHomework" placeholder="Ödev yaz..."></textarea>
-        </div>
-        <div class="field">
-          <div class="label">NOT</div>
-          <textarea id="iNote" placeholder="Not yaz..."></textarea>
-        </div>
-        <div class="field">
-          <div class="label">SINAV TARİHİ</div>
-          <input id="iExamDate" type="date" />
-        </div>
-        <div class="field">
-          <div class="label">SINAV AÇIKLAMA</div>
-          <textarea id="iExamNote" placeholder="Sınav konusu / açıklama..."></textarea>
-        </div>
-
-        <div class="btnRow">
-          <button class="btn" id="btnCancel" type="button">Vazgeç</button>
-          <button class="btn btnPrimary" id="btnSave" type="button">Kaydet</button>
-        </div>
-        <div class="hint">
-          Kayıtlar telefonda saklanır (internet olmasa da çalışır).<br>
+</div>
+<!-- HAFTALIK (sonraki aşama) -->
+<div class="weeklyWrap" id="weeklyWrap">
+<div id="weeklyGridWrap"></div>
+</div>
+</div>
+</div>
+<div style="height: 120px"></div>
+<div aria-hidden="true" class="frame"></div>
+<!-- Modal: nokta tıkla / uzun bas -->
+<div aria-hidden="true" class="modalOverlay" id="overlay">
+<div aria-label="Ders notu" aria-modal="true" class="sheet" role="dialog">
+<div class="sheetHeader">
+<div style="min-width:0">
+<div class="sheetTitle" id="sheetTitle">Ders</div>
+<div class="muted" id="sheetSub">—</div>
+</div>
+<div class="pill" id="sheetMode">BİLGİ</div>
+</div>
+<div id="viewPanel">
+<div class="noteCard" style="margin-top:0">
+<div><b>Ödev</b></div>
+<div class="muted" id="vHomework">—</div>
+<div class="hr"></div>
+<div><b>Not</b></div>
+<div class="muted" id="vNote">—</div>
+<div class="hr"></div>
+<div><b>Sınav</b></div>
+<div class="muted" id="vExam">—</div>
+</div>
+<div class="btnRow">
+<button class="btn" id="btnClose" type="button">Kapat</button>
+<button class="btn btnPrimary" id="btnEdit" type="button">Düzenle</button>
+</div>
+</div>
+<div id="editPanel" style="display:none">
+<div class="field">
+<div class="label">ÖDEV</div>
+<textarea id="iHomework" placeholder="Ödev yaz..."></textarea>
+</div>
+<div class="field">
+<div class="label">NOT</div>
+<textarea id="iNote" placeholder="Not yaz..."></textarea>
+</div>
+<div class="field">
+<div class="label">SINAV TARİHİ</div>
+<input id="iExamDate" type="date"/>
+</div>
+<div class="field">
+<div class="label">SINAV AÇIKLAMA</div>
+<textarea id="iExamNote" placeholder="Sınav konusu / açıklama..."></textarea>
+</div>
+<div class="btnRow">
+<button class="btn" id="btnCancel" type="button">Vazgeç</button>
+<button class="btn btnPrimary" id="btnSave" type="button">Kaydet</button>
+</div>
+<div class="hint">
+          Kayıtlar telefonda saklanır (internet olmasa da çalışır).<br/>
           İstersen sonraki aşamada “Yedekle / Geri Yükle” ekleriz.
         </div>
-      </div>
-    </div>
-  </div>
-
-
-
-  <!-- NOTLAR -->
-  <div class="modalOverlay" id="notesOverlay" aria-hidden="true">
-    <div class="sheet" role="dialog" aria-modal="true" aria-label="Notlar">
-      <div class="sheetHeader">
-        <div class="sheetTitle">NOTLAR</div>
-        <button class="btn" id="btnNotesClose" type="button">Kapat</button>
-      </div>
-
-      <div class="filters" aria-label="Filtreler">
-        <button class="filterBtn active" data-filter="all" type="button">Hepsi</button>
-        <button class="filterBtn" data-filter="homework" type="button">Ödev</button>
-        <button class="filterBtn" data-filter="note" type="button">Not</button>
-        <button class="filterBtn" data-filter="exam" type="button">Sınav</button>
-      </div>
-
-      <div id="notesList"></div>
-    </div>
-  
-
-  <script>
+</div>
+</div>
+</div>
+<!-- NOTLAR -->
+<div aria-hidden="true" class="modalOverlay" id="notesOverlay">
+<div aria-label="Notlar" aria-modal="true" class="sheet" role="dialog">
+<div class="sheetHeader">
+<div class="sheetTitle">NOTLAR</div>
+<div aria-label="Kullanım ipuçları" class="notesMiniHelp">
+<div>Ders satırına basılı tut → ilk not/ödev/sınav girişini açar.</div>
+<div>Turuncu nokta varsa dokun → kayıtlı bilgi sayfasını açar.</div>
+</div>
+</div>
+<div aria-label="Filtreler" class="filters">
+<button class="filterBtn active" data-filter="all" type="button">Hepsi</button>
+<button class="filterBtn" data-filter="homework" type="button">Ödev</button>
+<button class="filterBtn" data-filter="note" type="button">Not</button>
+<button class="filterBtn" data-filter="exam" type="button">Sınav</button>
+<button class="btn" id="btnNotesClose" type="button">Kapat</button>
+</div>
+<div id="notesList"></div>
+</div>
+<script>
     /***********************
      * OFFLINE KAYIT MANTIĞI
      * - Ders programı (sabit) = JS içinde
@@ -3268,6 +3379,45 @@ body.theme-day .dayTab.active{
       let store = {};
       try{ store = loadStore(); }catch(e){ store = {}; }
 
+      // Meta yoksa (eski kayıtlar) ayarlar tablosundan ders/sınıf bilgisini tamamla
+      // Böylece ders satırı noktaları her cihazda doğru çalışır.
+      let dayLessonsCache = null;
+      function getMetaFromSettings(dayIndex, no){
+        try{
+          if(!dayLessonsCache) dayLessonsCache = loadTimetableFromSettings() || {};
+          const arr = dayLessonsCache && dayLessonsCache[dayIndex] ? dayLessonsCache[dayIndex] : [];
+          const r = (arr||[]).find(x => Number(x.no) === Number(no));
+          if(!r) return null;
+          return {dayIndex: Number(dayIndex), no: Number(r.no), time: r.time||"", cls: r.cls||"", lesson: r.lesson||""};
+        }catch(e){ return null; }
+      }
+      try{
+        let changed = false;
+        Object.keys(store||{}).forEach(id=>{
+          const it = store[id];
+          if(!it) return;
+          // id = "day|no"
+          const parts = String(id).split("|");
+          if(parts.length < 2) return;
+          const d = Number(parts[0]);
+          const n = Number(parts[1]);
+          if(!it.meta) it.meta = {};
+          if(!(it.meta.lesson && String(it.meta.lesson).trim())){
+            const m = getMetaFromSettings(d, n);
+            if(m && m.lesson){
+              it.meta.dayIndex = d;
+              it.meta.no = n;
+              it.meta.time = m.time;
+              it.meta.cls = m.cls;
+              it.meta.lesson = m.lesson;
+              store[id] = it;
+              changed = true;
+            }
+          }
+        });
+        if(changed){ try{ saveStore(store); }catch(e){} }
+      }catch(e){}
+
       // 1) Kayıt olan ders adları
       const lessonsWithRecord = new Set();
       try{
@@ -3343,7 +3493,8 @@ const notesOverlay = document.getElementById("notesOverlay");
     let activeFilter = "all";
 
     function hasAnyNotes(){
-      const store = loadStore();
+      let store = {};
+      try{ store = loadStore(); }catch(e){ store = {}; }
       return Object.values(store).some(item => {
         if(!item) return false;
         const hw = item.homework != null ? String(item.homework).trim() : "";
@@ -3356,18 +3507,11 @@ const notesOverlay = document.getElementById("notesOverlay");
     }
 
     function refreshNotesDot(){
-      try{
-        const on = hasAnyNotes();
-        (notesDots && notesDots.length ? notesDots : [...document.querySelectorAll(".notesDot")])
-          .forEach(d=>d.classList.toggle("on", on));
-}catch(e){
-        // herhangi bir veri tipi hatasında en azından kayıt varsa noktayı yak
-        try{
-          const store = loadStore();
-          const any = store && Object.keys(store).length>0;
-          /*notesDot*/classList.toggle("on", !!any);
-        }catch(_e){}
-      }
+      const on = !!hasAnyNotes();
+      // Hem id hem class kullanan sürümler için: ekrandaki TÜM not noktalarını güncelle
+      document.querySelectorAll("#notesDot, .notesDot").forEach(el=>{
+        try{ el.classList.toggle("on", on); }catch(e){}
+      });
     }
 
     function entryMatchesFilter(item, filter){
@@ -3416,13 +3560,13 @@ const notesOverlay = document.getElementById("notesOverlay");
         const meta = safeMeta(item);
         const title = meta.lesson ? meta.lesson : (meta.cls ? meta.cls : "Kayıt");
         const dayText = (meta.dayIndex !== null) ? DAYS[meta.dayIndex] : "—";
-        const line1 = `${dayText}${meta.time ? " • "+meta.time : ""}${meta.cls ? " • "+meta.cls : ""}${meta.no ? " • "+meta.no+". Ders" : ""}`;
+        const line1 = `${dayText}${meta.time ? " "+meta.time : ""}${meta.cls ? " "+meta.cls : ""}${meta.no ? " "+meta.no+". Ders" : ""}`;
 
         const parts = [];
         if(item.homework && item.homework.trim()) parts.push("Ödev");
         if(item.note && item.note.trim()) parts.push("Not");
         if(item.examDate && item.examDate.trim()) parts.push("Sınav: " + item.examDate);
-        const line2 = parts.join(" • ");
+        const line2 = parts.join(" ");
 
         const div = document.createElement("div");
         div.className = "noteCard";
@@ -3532,6 +3676,28 @@ const notesOverlay = document.getElementById("notesOverlay");
      ************************/
     const dayTabs = [...document.querySelectorAll(".dayTab")];
     const daySwipe = document.getElementById("daySwipe");
+    const dayTabsBar = document.getElementById("dayTabs");
+
+    function centerDayTabsIfNeeded(){
+      if(!dayTabsBar) return {canScroll:false};
+      // Görünür gün butonlarının toplam genişliği (gap dahil)
+      const visible = dayTabs.filter(el => el.style.display !== "none");
+      const gapStr = (getComputedStyle(dayTabsBar).gap || "0").trim();
+      const gap = parseFloat(gapStr) || 0;
+      let total = 0;
+      visible.forEach((el, idx)=>{
+        total += (el.offsetWidth || 0) + (idx ? gap : 0);
+      });
+
+      const canScroll = total > (dayTabsBar.clientWidth + 2);
+      // Az gün varsa ortala, çok gün varsa normal davran (kaydırılabilir)
+      dayTabsBar.style.justifyContent = canScroll ? "flex-start" : "center";
+      if(!canScroll){
+        // Önceden kaydırıldıysa sıfırla (az gün seçince sola yapışma olmasın)
+        dayTabsBar.scrollLeft = 0;
+      }
+      return {canScroll};
+    }
     let activeDay = 0;
 
     function setActiveDay(index, dirHint=0){
@@ -3556,11 +3722,17 @@ const notesOverlay = document.getElementById("notesOverlay");
         b.style.display = active[d] ? "" : "none";
       });
 
+      centerDayTabsIfNeeded();
+
       dayTabs.forEach(b => b.classList.remove("active"));
       const btn = dayTabs.find(b => Number(b.dataset.day) === activeDay);
       if(btn){
         btn.classList.add("active");
-        btn.scrollIntoView({behavior:"smooth", inline:"center", block:"nearest"});
+        const info = centerDayTabsIfNeeded();
+        // Gün çoksa aktif olanı ortalamak için kaydır (az günse zaten ortalanıyor)
+        if(info && info.canScroll){
+          btn.scrollIntoView({behavior:"smooth", inline:"center", block:"nearest"});
+        }
       }
 
       dayTrack.style.transform = `translateX(-${activeDay * (100/7)}%)`;
@@ -3682,16 +3854,17 @@ const notesOverlay = document.getElementById("notesOverlay");
           lesson: currentMeta ? currentMeta.row.lesson : ""
         }
       };
-      saveStore(store);
-      refreshDots();
-      refreshNotesDot();
+      try{ saveStore(store); }catch(e){ console.warn(e); }
+      try{ refreshDots(); }catch(e){}
+      try{ refreshNotesDot(); }catch(e){}
+      try{ liveRefreshAll && liveRefreshAll(); }catch(e){}
       // kaydettikten sonra görüntüleme
       if(currentMeta) openView(currentId, currentMeta.dayIndex, currentMeta.row);
     });
 
     function setSheetHeader(dayIndex, row){
       sheetTitle.textContent = row.lesson;
-      sheetSub.textContent = `${DAYS[dayIndex]} • ${row.time} • ${row.cls} • ${row.no}. Ders`;
+      sheetSub.textContent = `${DAYS[dayIndex]} ${row.time} ${row.cls} ${row.no}. Ders`;
     }
 
     function openView(id, dayIndex, row){
@@ -3713,7 +3886,7 @@ const notesOverlay = document.getElementById("notesOverlay");
       if(item && item.examDate){
         const diff = daysBetween(ymd(new Date()), item.examDate);
         const near = (diff >= 0 && diff <= 2) ? ` (⚠️ ${diff} gün kaldı)` : "";
-        const extra = (item.examNote && item.examNote.trim()) ? ` • ${item.examNote}` : "";
+        const extra = (item.examNote && item.examNote.trim()) ? ` ${item.examNote}` : "";
         vExam.textContent = `${item.examDate}${near}${extra}`;
       }else{
         vExam.textContent = "—";
@@ -4021,186 +4194,137 @@ const notesOverlay = document.getElementById("notesOverlay");
 
 </script>
 </div>
-
-
 <!-- AYARLAR -->
-<div class="overlay" id="settingsOverlay" aria-hidden="true">
-  <div class="backdrop" id="settingsBackdrop"></div>
-  <div class="panel" role="dialog" aria-modal="true" aria-label="Ayarlar">
-    <div class="top">
-      <div class="ttl">AYARLAR</div>
-      <div class="topActions">
-        <button class="miniBtn primary" id="btnSaveSettingsTop" type="button">Kaydet</button>
-        <button class="miniBtn" id="btnCloseSettings" type="button">Kapat</button>
-      </div>
-    </div>
-    <div class="body">
-      <div class="rowInline rowAlign">
-  <div class="inlineGroup">
-    <span class="small">Tema</span>
-    <button class="miniBtn" id="btnNight" type="button">Gece</button>
-    <button class="miniBtn" id="btnDay" type="button">Gündüz</button>
-
-    <span class="small" style="margin-left:12px">Yazı</span>
-    <select id="fontSizeSelect" class="miniSelect">
-      <option value="small">Küçük</option>
-      <option value="medium" selected>Orta</option>
-      <option value="large">Büyük</option>
-      <option value="xlarge">Çok Büyük</option>
-    </select>
-  </div>
+<div aria-hidden="true" class="overlay" id="settingsOverlay">
+<div class="backdrop" id="settingsBackdrop"></div>
+<div aria-label="Ayarlar" aria-modal="true" class="panel" role="dialog">
+<div class="top">
+<div class="ttl">AYARLAR</div>
+<div class="topActions">
+<button class="miniBtn primary" id="btnSaveSettingsTop" type="button">Kaydet</button>
+<button class="miniBtn" id="btnCloseSettings" type="button">Kapat</button>
 </div>
-
+</div>
+<div class="body">
+<div class="rowInline rowAlign">
+<div class="inlineGroup">
+<span class="small">Tema</span>
+<button class="miniBtn" id="btnDay" type="button">Gündüz</button><button class="miniBtn" id="btnNight" type="button">Gece</button>
+<span class="small" style="margin-left:12px">Yazı</span>
+<select class="miniSelect" id="fontSizeSelect">
+<option value="small">Küçük</option>
+<option selected="" value="medium">Orta</option>
+<option value="large">Büyük</option>
+<option value="xlarge">Çok Büyük</option>
+</select>
+</div>
+</div>
 <hr class="soft"/>
-
-      <!-- İLK ADIM: Zaman Tablosu -->
-      <div>
-        <div class="sectionTitle">Zaman Tablosu</div>
-        <div class="timeGrid">
-          <div class="timeCell">
-            <label>Başlangıç Saati</label>
-            <input type="time" id="startTimeInp"/>
-          </div>
-          <div class="timeCell">
-            <label>Teneffüs</label>
-            <div class="inlineInput">
-              <input type="number" id="breakInp" min="0"/>
-              <span>dk</span>
-            </div>
-          </div>
-          <div class="timeCell">
-            <label>Öğlen Arası</label>
-            <div class="inlineInput">
-              <input type="number" id="lunchInp" min="0"/>
-              <span>dk</span>
-            </div>
-          </div>
-          <div class="timeCell">
-            <label>Öğleden Sonra Ders No</label>
-            <input type="number" id="afterNoInp" min="1"/>
-          </div>
-        </div>
-      </div>
-
-      <hr class="soft"/>
-
-      <!-- SINIF + DERS TABLOSU -->
-      <div>
-        <div class="sectionTitle">Sınıf / Ders Tablosu</div>
-
-        
-        <div class="pairRow3">
-          <div class="pairCell">
-            <label>Sınıf / Şube</label>
-            <input id="clsInp" type="text" placeholder="12/J" />
-          </div>
-          <div class="pairCell">
-            <label>Ders Adı</label>
-            <input id="lesInp" type="text" placeholder="KELAM" />
-          </div>
-          <div class="pairCell pairBtnCell">
-            <label>&nbsp;</label>
-            <button class="miniBtn" id="btnAddPair" type="button">Ekle</button>
-          </div>
-        </div>
-
-        <div class="muteline" style="margin-top:10px">Örn: 12/J + KELAM</div>
-
-
-        <div class="pairTableWrap">
-          <table class="pairTable" id="pairTable" aria-label="Sınıf Ders Tablosu">
-            <thead>
-              <tr>
-                <th style="width:42%">Sınıf/Şube</th>
-                <th>Ders</th>
-                <th style="width:72px"></th>
-              </tr>
-            </thead>
-            <tbody id="pairTbody"></tbody>
-          </table>
-        </div>
-      </div>
-
-      
-      <hr class="soft"/>
-
-      <!-- AKTİF GÜNLER -->
-      <div>
-        <div class="sectionTitle">Aktif Günler</div>
-
-        <div class="settingsCard" style="margin-top:10px">
-          <div id="activeDaysGrid" class="activeDaysGrid" aria-label="Aktif günler"></div>
-          <div class="small muted" style="margin-top:10px">
+<!-- İLK ADIM: Zaman Tablosu -->
+<div>
+<div class="sectionTitle">Zaman Tablosu</div>
+<div class="timeGrid">
+<div class="timeCell">
+<label>Başlangıç Saati</label>
+<input id="startTimeInp" type="time"/>
+</div>
+<div class="timeCell">
+<label>Teneffüs</label>
+<div class="inlineInput">
+<input id="breakInp" min="0" type="number"/>
+<span>dk</span>
+</div>
+</div>
+<div class="timeCell">
+<label>Öğlen Arası</label>
+<div class="inlineInput">
+<input id="lunchInp" min="0" type="number"/>
+<span>dk</span>
+</div>
+</div>
+<div class="timeCell">
+<label>Öğleden Sonra Ders No</label>
+<input id="afterNoInp" min="1" type="number"/>
+</div>
+</div>
+</div>
+<hr class="soft"/>
+<!-- SINIF + DERS TABLOSU -->
+<div>
+<div class="sectionTitle">Sınıf / Ders Tablosu</div>
+<div class="pairRow3">
+<div class="pairCell">
+<label>Sınıf / Şube</label>
+<input id="clsInp" placeholder="12/J" type="text"/>
+</div>
+<div class="pairCell">
+<label>Ders Adı</label>
+<input id="lesInp" placeholder="KELAM" type="text"/>
+</div>
+<div class="pairCell pairBtnCell">
+<label> </label>
+<button class="miniBtn" id="btnAddPair" type="button">Ekle</button>
+</div>
+</div>
+<div class="muteline" style="margin-top:10px">Örn: 12/J + KELAM</div>
+<div class="pairTableWrap">
+<table aria-label="Sınıf Ders Tablosu" class="pairTable" id="pairTable">
+<thead>
+<tr>
+<th style="width:42%">Sınıf/Şube</th>
+<th>Ders</th>
+<th style="width:72px"></th>
+</tr>
+</thead>
+<tbody id="pairTbody"></tbody>
+</table>
+</div>
+</div>
+<hr class="soft"/>
+<!-- AKTİF GÜNLER -->
+<div>
+<div class="sectionTitle">Aktif Günler</div>
+<div class="settingsCard" style="margin-top:10px">
+<div aria-label="Aktif günler" class="activeDaysGrid" id="activeDaysGrid"></div>
+<div class="small muted" style="margin-top:10px">
             Kapalı günler üstteki gün barında görünmez ve kaydırarak (swipe) geçişte atlanır.
           </div>
-        </div>
-      </div>
-
-
-      <hr class="soft"/>
-
-      <!-- GÜN PROGRAMI: seçilen gün + ders sayısı + ders girişleri -->
-      <div>
-        <div class="sectionTitle">Gün Programı</div>
-
-        <div class="rowInline gunPlanTop" style="margin-bottom:10px">
-          <span class="small">Gün</span>
-          <select id="dayPlanSelect" class="miniSelect dayNarrow">
-            <option value="0">Pazartesi</option>
-            <option value="1">Salı</option>
-            <option value="2">Çarşamba</option>
-            <option value="3">Perşembe</option>
-            <option value="4">Cuma</option>
-            <option value="5">Cumartesi</option>
-            <option value="6">Pazar</option>
-          </select>
-
-          <span class="small" style="margin-left:6px">Ders Sayısı</span>
-          <select id="lessonCountSelect" class="miniSelect tinySelect"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8" selected>8</option><option value="9">9</option><option value="10">10</option></select>
-        </div>
-
-        <div class="planTableWrap">
-          <div class="planHead">
-            <div>#</div>
-            <div>Zaman</div>
-            <div>Sınıf/Şube</div>
-            <div>Ders</div>
-          </div>
-          <div id="planRows"></div>
-        </div>
-
-        <div class="muteline" style="margin-top:8px">
-          Not: Değişiklikler otomatik kaydedilir.
-        </div>
-      </div>
-
-      <!-- Diğer bölümler için sonra devam edeceğiz -->
-    </div>
-  </div>
 </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div id="toast" class="toast" aria-live="polite" aria-atomic="true"></div>
-
+</div>
+<hr class="soft"/>
+<!-- GÜN PROGRAMI: seçilen gün + ders sayısı + ders girişleri -->
+<div>
+<div class="sectionTitle">Gün Programı</div>
+<div class="rowInline gunPlanTop" style="margin-bottom:10px">
+<span class="small">Gün</span>
+<select class="miniSelect dayNarrow" id="dayPlanSelect">
+<option value="0">Pazartesi</option>
+<option value="1">Salı</option>
+<option value="2">Çarşamba</option>
+<option value="3">Perşembe</option>
+<option value="4">Cuma</option>
+<option value="5">Cumartesi</option>
+<option value="6">Pazar</option>
+</select>
+<span class="small" style="margin-left:6px">Ders Sayısı</span>
+<select class="miniSelect tinySelect" id="lessonCountSelect"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option selected="" value="8">8</option><option value="9">9</option><option value="10">10</option></select>
+</div>
+<div class="planTableWrap">
+<div class="planHead">
+<div>#</div>
+<div>Zaman</div>
+<div>Sınıf/Şube</div>
+<div>Ders</div>
+</div>
+<div id="planRows"></div>
+</div>
+<div class="muteline" style="margin-top:8px"></div>
+</div>
+<!-- Diğer bölümler için sonra devam edeceğiz -->
+</div>
+</div>
+</div>
+<div aria-atomic="true" aria-live="polite" class="toast" id="toast"></div>
 <script>
   // ===== Toast helper =====
   (function(){
@@ -4215,7 +4339,6 @@ const notesOverlay = document.getElementById("notesOverlay");
     };
   })();
 </script>
-
 <script id="settings-new-js">
 
 (function(){
@@ -4320,6 +4443,7 @@ const notesOverlay = document.getElementById("notesOverlay");
     try{ renderAllPages && renderAllPages(); }catch(e){}
     try{ refreshDots && refreshDots(); }catch(e){}
     try{ refreshNotesDot && refreshNotesDot(); }catch(e){}
+      try{ refreshNotesDot && refreshNotesDot(); }catch(e){}
   }
 
   function persistAll(){
@@ -4748,6 +4872,11 @@ const btnDay = $("btnDay");
     initPairs();
     renderActiveDays();
     initPlanEditor();
+
+    // Açılışta noktaları tazele
+    try{ liveRefreshAll && liveRefreshAll(); }catch(e){}
+    try{ setTimeout(()=>{ try{ liveRefreshAll && liveRefreshAll(); }catch(e){} }, 50); }catch(e){}
+
   }
 
   if(document.readyState === "loading"){
@@ -4758,6 +4887,5 @@ const btnDay = $("btnDay");
 })();
 
 </script>
-
 </body>
 </html>
