@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 
 <html lang="tr">
@@ -204,8 +203,8 @@
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
       font-variant-numeric: tabular-nums;
       letter-spacing: .06em;
-      font-weight: 800;
-      font-size: .74rem;
+      font-weight: 700;
+      font-size: .65rem;
       opacity: 1;
       color: rgba(210,225,245,.55);
     }
@@ -1161,69 +1160,6 @@ body.light .notlar-modal .close:hover {
   text-align: right;
 }
 
-
-/* === WEEKLY STYLE OVERRIDES === */
-#weeklyView{
-  background: linear-gradient(180deg, #0b1220, #0f1728) !important;
-}
-.weeklyTableWrapper{
-  background: #0b1220 !important;
-}
-.weeklyTable th, .weeklyTable td{
-  background: #0b1220 !important;
-  border-color: rgba(255,255,255,.10) !important;
-}
-/* Remove borders for empty cells */
-.weeklyTable td.emptyTd{
-  border: none !important;
-  background: #0b1220 !important;
-}
-
-/* Header row and left column same bg */
-.weeklyTable thead th,
-.weeklyTable th.dayHead,
-.weeklyTable tbody th.dayHead{
-  background: #0b1220 !important;
-}
-
-/* Orange lesson headers and class names */
-.weeklyTable thead .thNo,
-.weeklyTable .weeklyCls{
-  color: var(--orange) !important;
-}
-
-/* Bold left day names */
-.weeklyTable th.dayHead{
-  font-weight: 1000 !important;
-}
-
-
-/* === WEEKLY: SOL SÜTUN İÇ ÇİZGİSİ & ÜST SATIR ALT ÇİZGİSİ ÇİFT === */
-
-/* Sol sütun iç çizgisi (double) */
-.weeklyTable th.dayHead,
-.weeklyTable tbody th.dayHead{
-  border-right: 3px double rgba(255,255,255,0.25) !important;
-}
-
-/* Üst satır alt çizgisi (double) */
-.weeklyTable thead th{
-  border-bottom: 3px double rgba(255,255,255,0.25) !important;
-}
-
-/* Diğer hücre çizgileri soft kalsın */
-.weeklyTable th,
-.weeklyTable td{
-  border-color: rgba(255,255,255,0.10) !important;
-}
-
-/* Boş hücrelerde çizgileri kaldır */
-.weeklyTable td:empty,
-.weeklyTable td.emptyTd{
-  border: none !important;
-  background: #0b1220 !important;
-}
-
 </style>
 <style>
 /* === PORTRAIT HORIZONTAL SCROLL FIX === */
@@ -1419,6 +1355,37 @@ html{ font-size: 14px !important; }
 }
 
 </style>
+
+<style>
+/* === Saatleri küçült: net override === */
+.tblTime{ font-size:.65rem !important; font-weight:700 !important; letter-spacing:.04em !important; }
+</style>
+
+
+<style id="time-fit-override">
+/* Saat sutunu daha kucuk + ders ismi kesilmesin (wrap acik) */
+@media (max-width: 720px){
+  .tblHead, .tblRow{
+    grid-template-columns: 34px 74px 1fr 92px !important;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+}
+/* Tum ekranlarda ders adi kesilmesin */
+.tblLes{
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: initial !important;
+  word-break: break-word;
+  line-height: 1.12;
+}
+/* Saat alani sabit ve saga yasli kalsin */
+.tblTime{
+  justify-self: end !important;
+  text-align: right !important;
+}
+</style>
+
 </head>
 <body>
 <div class="appFrame">
@@ -2233,10 +2200,8 @@ function renderWeeklyTable(){
 
   let ths = `<tr><th class="dayHead">Gün</th>`;
   for(let i=1;i<=lessonCount;i++){
-    // Haftalık başlıkta sadece başlangıç saatini göster (örn: "08:15"), bitiş saatini gizle.
-    const tRange = getLessonTimeForHeader(i) || "";
-    const tStart = (""+tRange).split("-")[0].trim();
-    const tt = (typeof escapeHtml==="function") ? escapeHtml(tStart) : tStart;
+    const t = getLessonTimeForHeader(i);
+    const tt = (typeof escapeHtml==="function") ? escapeHtml(t) : t;
     ths += `<th><div class="thNo">${i}. Ders</div><div class="thTime">${tt}</div></th>`;
   }
   ths += `</tr>`;
@@ -2278,7 +2243,7 @@ function renderWeeklyTable(){
       const lesVal = (r && (r.les||"").trim()) || "";
       // ✅ Bazı günlerde "boş ama kayıtlı" satır geliyor: cls/les boşsa bunu da boş say
       if(!r || (!clsVal && !lesVal)){
-        rowsHTML += `<td class="emptyTd">–</td>`;
+        rowsHTML += `<td class="emptyTd"></td>`;
       }else{
         rowsHTML += `<td>${cellHTML(r)}</td>`;
       }
@@ -2384,6 +2349,32 @@ function lessonLabelFromKey(key){
 function notesForDay(day){
   return NOTES.filter(n => n.day === day);
 }
+
+// Programdaki derslerle eslesen notlari (notun girildigi gun fark etmeksizin) bulmak icin
+function lessonKeysForDay(day){
+  const rows = scheduleForDay(day) || [];
+  const keys = new Set();
+  rows.forEach(r=>{
+    const k = makeLessonKey(r);
+    if(k) keys.add(k);
+  });
+  return keys;
+}
+
+function lessonNotesForDay(day){
+  const keys = lessonKeysForDay(day);
+  return NOTES.filter(n => n && n.kind==='lesson' && n.lessonKey && keys.has(n.lessonKey));
+}
+
+function dayNotesForDay(day){
+  return NOTES.filter(n => n && n.kind==='day' && n.day===day);
+}
+
+function notesVisibleForDay(day){
+  // Ders notlari: o gun programinda bulunan derslerin notlari
+  // Gun notu: sadece o gunun kendi gun notu
+  return [...lessonNotesForDay(day), ...dayNotesForDay(day)];
+}
 function normalizeKinds(){
   NOTES = NOTES.map(n => (n && !n.kind) ? ({...n, kind:"lesson"}) : n);
 }
@@ -2412,9 +2403,7 @@ function dayNoteFor(day){
 }
 
 function notesExistForDay(day){
-  const hasLesson = NOTES.some(n => n.day===day && (n.kind||"lesson")==="lesson");
-  const hasDay = NOTES.some(n => n.day===day && n.kind==="day" && (n.text||n.dayText||"").trim());
-  return hasLesson || hasDay;
+  return notesVisibleForDay(day).length>0;
 }
 function refreshNotlarDot(day){
   const dot = document.querySelector(".noteDot");
@@ -2535,7 +2524,7 @@ function renderNotesUI(day, opts){
   opts = opts || {};
   const mode = opts.mode || 'view';
   const rows = scheduleForDay(day);
-  const lessonNotes = notesForDay(day).filter(n => (n.kind||'lesson')==='lesson');
+  const lessonNotes = notesVisibleForDay(day).filter(n => (n.kind||'lesson')==='lesson');
   const dayNote = dayNoteFor(day);
 
   // helpers for labels (no need to show time in cards)
@@ -2787,7 +2776,7 @@ function renderNotesUI(day, opts){
           if(act==='del'){
             NOTES = NOTES.filter(x=>x.id!==n.id);
             saveJSON(LS_NOTES_KEY, NOTES);
-            const fresh = notesForDay(day).filter(x => (x.kind||'lesson')==='lesson').slice().sort((a,b)=>(b.ts||0)-(a.ts||0));
+            const fresh = notesVisibleForDay(day).filter(x => (x.kind||'lesson')==='lesson').slice().sort((a,b)=>(b.ts||0)-(a.ts||0));
             list.length=0; fresh.forEach(x=>list.append(x));
             renderList();
             refreshNotlarDot(day);
@@ -2832,7 +2821,7 @@ function renderNotesUI(day, opts){
     }
 
     saveJSON(LS_NOTES_KEY, NOTES);
-    const fresh = notesForDay(day).filter(x => (x.kind||'lesson')==='lesson').slice().sort((a,b)=>(b.ts||0)-(a.ts||0));
+    const fresh = notesVisibleForDay(day).filter(x => (x.kind||'lesson')==='lesson').slice().sort((a,b)=>(b.ts||0)-(a.ts||0));
     list.length=0; fresh.forEach(x=>list.append(x));
     renderList();
     refreshNotlarDot(day);
@@ -3180,14 +3169,70 @@ btnWeekly.addEventListener("click", showWeekly);
   }
 
 /* === GÜNLÜK TABLO: DERS ALANI DAHA VERİMLİ (SABİT FONT + TAŞAN KES) === */
+
+/* === HAFTALIK TABLO: LACİVERT ZEMİN + TURUNCU BAŞLIKLAR + ÇİFT ÇİZGİ AYIRICI === */
+:root{
+  --weeklyBg0: rgba(10,18,40,0.86);
+  --weeklyBg1: rgba(12,22,48,0.62);
+  --weeklyHdr: rgba(18,28,56,0.88);
+  --weeklyLine: rgba(255,255,255,0.16);
+  --weeklyLineStrong: rgba(255,255,255,0.34);
+}
+#weeklyView, .weeklyWrap{
+  background: radial-gradient(1200px 600px at 30% 0%, rgba(255,122,0,0.10), transparent 55%),
+              linear-gradient(180deg, var(--weeklyBg0), var(--weeklyBg1));
+}
+.weeklyTableWrapper{
+  background: rgba(8,14,30,0.55) !important;
+}
+.weeklyTable{
+  background: transparent !important;
+}
+.weeklyTable th, .weeklyTable td{
+  background: rgba(10,18,40,0.48) !important;
+  border-color: var(--weeklyLine) !important;
+}
+/* Üst satır (ders başlıkları) */
+.weeklyTable thead th{
+  background: var(--weeklyHdr) !important;
+  border-bottom: 3px double var(--weeklyLineStrong) !important;
+}
+/* Sol sütun (günler) */
+.weeklyTable th.dayHead{
+  background: var(--weeklyHdr) !important;
+  font-weight: 800 !important;
+  border-right: 3px double var(--weeklyLineStrong) !important;
+}
+/* Ders başlığı (1. Ders gibi) turuncu */
+.weeklyTable thead th .thNo{
+  color: var(--orange) !important;
+  font-weight: 900 !important;
+}
+/* Hücre içindeki sınıf adı turuncu */
+.weeklyTable .weeklyCls{
+  color: var(--orange) !important;
+  font-weight: 900 !important;
+}
+/* Boş hücrelerde ortadaki kısa çizgi yok; içerik zaten boş bırakıldı */
+.weeklyTable .emptyTd{
+  color: transparent !important;
+  text-shadow: none !important;
+}
+
 .tblRow{
-  grid-template-columns: 34px 76px 1fr 96px !important; /* ders alanı genişlesin */
+  /* Daha fazla alanı DERS'e ver: SINIF ve SAAT biraz daralsın */
+  grid-template-columns: 34px 70px 1fr 86px !important;
   padding-left: 0 !important;
-  padding-right: 0 !important; /* sağ-sol sıfır */
+  padding-right: 0 !important;
+  overflow: visible !important;
+}
+
+@media (max-width: 420px){
+  .tblRow{ grid-template-columns: 32px 64px 1fr 78px !important; }
 }
 /* sadece satır içi hizayı korumak için ilk/son hücrelere küçük iç boşluk */
-.tblNo{ padding-left: 14px !important; }
-.tblTime{ padding-right: 14px !important; }
+.tblNo{ padding-left: 12px !important; }
+.tblTime{ padding-right: 0 !important; justify-self: end !important; }
 
 
 .tblCls{ color:#ffffff !important; font-weight:800 !important; }
@@ -3204,11 +3249,12 @@ btnWeekly.addEventListener("click", showWeekly);
   text-align: right !important;
 }
 .tblLes{
-  font-size: 14px !important; /* herkes aynı */
+  font-size: 14px !important;
   line-height: 1.2 !important;
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: clip !important; /* sığmayan kapalı */
+  /* Ders ismini kısaltma yapma: gerekiyorsa satır atsın */
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: unset !important;
   padding: 0 !important;
   margin: 0 !important;
 }
@@ -3278,17 +3324,48 @@ btnWeekly.addEventListener("click", showWeekly);
     if(!rows.length) return;
 
     const set = notePairSet();
-    rows.forEach(r => r.classList.remove("hasLessonNote"));
 
+    // temizle
+    rows.forEach(r => {
+      r.classList.remove("hasLessonNote");
+      const oldBtn = r.querySelector(".noteDotBtn");
+      if(oldBtn) oldBtn.remove();
+    });
+
+    // her ders-ciftinin ilk gorunumu (gun icinde) isaretleniyor
     const seen = new Set();
     rows.forEach(r=>{
       const cls = norm(r.querySelector(".tblCls")?.textContent);
       const les = norm(r.querySelector(".tblLes")?.textContent);
+      const time = norm(r.querySelector(".tblTime")?.textContent);
       if(!cls || !les) return;
       const pk = pairKey(cls, les);
       if(seen.has(pk)) return;
       seen.add(pk);
-      if(set.has(pk)) r.classList.add("hasLessonNote");
+      if(!set.has(pk)) return;
+
+      r.classList.add("hasLessonNote");
+
+      // Noktaya tiklama ile notlar acilsin (pseudo-element tiklanamaz, bu nedenle buton ekliyoruz)
+      const noCell = r.querySelector(".tblNo");
+      if(!noCell) return;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'noteDotBtn';
+      btn.setAttribute('aria-label','Notlari ac');
+
+      const lessonKey = (cls + "__" + les + "__" + time).replace(/\s+/g,' ');
+      btn.addEventListener('click', (ev)=>{
+        ev.preventDefault();
+        ev.stopPropagation();
+        window.__NM_PREFILL.pairKey = pk;
+        window.__NM_PREFILL.lessonKey = lessonKey;
+        if(typeof window.openNotes === 'function') window.openNotes();
+      });
+      // mobil icin
+      btn.addEventListener('touchstart', (ev)=>{ ev.stopPropagation(); }, {passive:true});
+
+      noCell.appendChild(btn);
     });
   }
 
@@ -3438,29 +3515,23 @@ btnWeekly.addEventListener("click", showWeekly);
 }
 
 
-/* === FIX: TÜM HÜCRE KENAR ÇİZGİLERİNİ TAMAMLA === */
-.weeklyTable th, .weeklyTable td{
-  border: 1px solid rgba(255,255,255,.25) !important;
+/* Noktaya tiklanabilir alan (pseudo-element tiklanamaz) */
+.tblNo{ position: relative; }
+.noteDotBtn{
+  position: absolute;
+  left: -14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
-
-/* Sol sütun ve üst satır çift çizgi korunur */
-.weeklyTable th.dayHead,
-.weeklyTable tbody th.dayHead{
-  border-right: 3px double rgba(255,255,255,0.45) !important;
-}
-
-.weeklyTable thead th{
-  border-bottom: 3px double rgba(255,255,255,0.45) !important;
-}
-
-/* Boş hücrelerde de çizgiler kalsın */
-.weeklyTable td:empty,
-.weeklyTable td.emptyTd{
-  border: 1px solid rgba(255,255,255,.25) !important;
-  background: #0b1220 !important;
-  color: transparent !important;
-}
-
+.noteDotBtn:focus{ outline: none; }
+.noteDotBtn:active{ transform: translateY(-50%) scale(0.96); }
 </style>
 </body>
 </html>
