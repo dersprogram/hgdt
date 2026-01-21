@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 
 <html lang="tr">
@@ -1386,6 +1387,29 @@ html{ font-size: 14px !important; }
 }
 </style>
 
+
+<style>
+/* TIMEFMT_TBLTIME_OVERRIDES */
+/* Varsayılan .tblTime dosyada range gibi küçük tanımlı. Tek giriş seçilince büyütüyoruz. */
+html.timefmt-start .tblTime{
+  font-family: inherit !important;
+  font-variant-numeric: normal !important;
+  letter-spacing: 0 !important;
+  font-weight: 800 !important;
+  font-size: 1rem !important;          /* ders ismiyle aynı */
+  color: rgba(255,255,255,.78) !important;
+}
+/* Range seçilince dosyadaki mevcut küçük/monospace görünüm zaten uygun; yine de garanti edelim */
+html.timefmt-range .tblTime{
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+  font-variant-numeric: tabular-nums !important;
+  letter-spacing: .06em !important;
+  font-weight: 700 !important;
+  font-size: .65rem !important;        /* 2 kademe küçük */
+  color: rgba(210,225,245,.55) !important;
+}
+</style>
+
 </head>
 <body>
 <div class="appFrame">
@@ -1470,7 +1494,8 @@ html{ font-size: 14px !important; }
 <div class="field"><label class="label">SÜRE (DK)</label><input class="input" id="set_dur" style="width:100%" type="number" value="40"/></div>
 <div class="field"><label class="label">TENEFFÜS</label><input class="input" id="set_break" style="width:100%" type="number" value="10"/></div>
 <div class="field"><label class="label">ÖĞLE ARASI</label><input class="input" id="set_lunch" style="width:100%" type="number" value="45"/></div>
-<div class="field"><label class="label">Öğleden Sonra Ders No</label><input class="input" id="set_lunch_no" style="width:100%" type="number" value="6"/></div>
+<div class="field"><label class="label">ÖĞLE NO</label><input class="input" id="set_lunch_no" style="width:100%" type="number" value="6"/></div>
+<div class="field"><label class="label">SAAT GÖRÜNÜMÜ</label><select class="input" id="timeFmtSel" style="width:100%"><option value="start">Sadece giriş saati (08:15)</option><option value="range">Giriş-çıkış (08:15-08:55)</option></select></div>
 </div>
 </div>
 <div class="divider"></div>
@@ -1534,7 +1559,24 @@ const LS_SCHEDULE_KEY   = "dt_schedule_v1";     // { day: [{no,cls,les,time}, ..
 const LS_ACTIVE_DAYS_KEY= "dt_active_days_v1";  // ["Pazartesi","Çarşamba",...]
 const LS_ITEMS_KEY      = "dt_items";           // [{c,d}]
 const LS_NOTES_KEY      = "dt_notes_v1";        // [{...}]
+const LS_TIME_FMT_KEY   = "dt_time_fmt_v1";     // "start" | "range"
 
+function getTimeFmt(){
+  const v = localStorage.getItem(LS_TIME_FMT_KEY);
+  return (v === "start" || v === "range") ? v : "range";
+}
+function setTimeFmt(v){
+  try{ localStorage.setItem(LS_TIME_FMT_KEY, v); }catch(_){}
+}
+
+
+function applyTimeFmtClass(){
+  try{
+    const fmt = getTimeFmt();
+    document.documentElement.classList.remove("timefmt-start","timefmt-range");
+    document.documentElement.classList.add(fmt === "start" ? "timefmt-start" : "timefmt-range");
+  }catch(_){}
+}
 function loadJSON(key, fallback){
   try{
     const raw = localStorage.getItem(key);
@@ -1813,6 +1855,8 @@ document.getElementById("fsSelect").onchange = (e)=>{
   const activeDaysGroup = document.getElementById('activeDaysGroup');
 
   let timeOptions = [];
+let timeOptionsStart = [];
+let timeOptionsRange = [];
   let items = loadJSON(LS_ITEMS_KEY, []); // [{c,d}]
   if(!Array.isArray(items)) items = [];
 
@@ -1870,20 +1914,32 @@ const calculateTimes = () => {
 
     let [h, m] = startVal.split(':').map(Number);
     let currentTotalMinutes = h * 60 + m;
-    timeOptions = [];
+
+    timeOptionsStart = [];
+    timeOptionsRange = [];
 
     for (let i = 1; i <= getLessonSlotCount(); i++) {
       if (i === lunchNo && i > 1) currentTotalMinutes = currentTotalMinutes - brk + lunch;
+
       let sH = Math.floor(currentTotalMinutes / 60) % 24;
       let sM = currentTotalMinutes % 60;
       let startStr = `${String(sH).padStart(2,'0')}:${String(sM).padStart(2,'0')}`;
+
       currentTotalMinutes += dur;
+
       let eH = Math.floor(currentTotalMinutes / 60) % 24;
       let eM = currentTotalMinutes % 60;
       let endStr = `${String(eH).padStart(2,'0')}:${String(eM).padStart(2,'0')}`;
-      timeOptions.push(`${startStr}-${endStr}`);
+
+      timeOptionsStart.push(startStr);
+      timeOptionsRange.push(`${startStr}-${endStr}`);
+
       currentTotalMinutes += brk;
     }
+
+    // Seçime göre aktif liste
+    timeOptions = (getTimeFmt() === "start") ? timeOptionsStart : timeOptionsRange;
+
     refreshAllTimeSelects();
   };
 
@@ -1904,6 +1960,40 @@ const calculateTimes = () => {
   function writeScheduleToStorage(sch){
     ALL_DAYS.forEach(d => { if(!Array.isArray(sch[d])) sch[d] = []; });
     saveJSON(LS_SCHEDULE_KEY, sch);
+  }
+
+  function convertAllScheduleTimes(targetFmt){
+    try{ calculateTimes(); }catch(_){}
+
+    const sch = readScheduleFromStorage();
+    const mapToStart = (t)=> (t || "").split("-")[0].trim();
+    const mapToRange = (t)=>{
+      const start = (t || "").split("-")[0].trim();
+      const found = (timeOptionsRange||[]).find(x => x.startsWith(start + "-"));
+      return found || (t || "");
+    };
+
+    ALL_DAYS.forEach(day=>{
+      (sch[day] || []).forEach(row=>{
+        if(!row) return;
+        const cur = row.time || "";
+        row.time = (targetFmt === "start") ? mapToStart(cur) : mapToRange(cur);
+      });
+    });
+
+    writeScheduleToStorage(sch);
+
+    // Ayarlar tablosundaki mevcut select değerleri de güncellensin
+    try{
+      const pb = document.getElementById('progBody') || (typeof progBody!=="undefined" ? progBody : null);
+      if(pb) pb.querySelectorAll('.tSel').forEach(sel=>{
+        const cur = sel.value || "";
+        sel.value = (targetFmt === "start") ? mapToStart(cur) : mapToRange(cur);
+      });
+    }catch(_){}
+
+    // Anasayfa/haftalık anında güncellensin
+    try{ setSchedule(readScheduleFromStorage()); }catch(_){}
   }
 
   const saveCurrentDay = () => {
@@ -2103,6 +2193,37 @@ function initSettingsFromStorage(){
       const day = cb.getAttribute("data-day");
       cb.checked = Array.isArray(savedDays) ? savedDays.includes(day) : true;
     });
+  }
+
+  // saat görünümü (start/range)
+  const fmtSel = document.getElementById("timeFmtSel");
+  if(fmtSel){
+    fmtSel.value = getTimeFmt();
+    try{ applyTimeFmtClass(); }catch(_){}
+    fmtSel.onchange = ()=>{
+      const v = (fmtSel.value === "start") ? "start" : "range";
+      setTimeFmt(v);
+      try{ applyTimeFmtClass(); }catch(_){}
+
+      // Saat seçeneklerini + kayıtları dönüştür
+      try{ convertAllScheduleTimes(v); }catch(_){}
+      try{ calculateTimes(); }catch(_){}
+
+      // Ayarlar içindeki günlük program tablosunu anında tazele
+      try{
+        const ds = document.getElementById("daySelector");
+        if(ds && typeof loadSchedule === "function"){
+          loadSchedule(ds.value || (ds.options && ds.options[0] ? ds.options[0].value : ""));
+        }
+      }catch(_){}
+
+      // Anasayfayı anında tazele
+      try{
+        if(typeof setSchedule === "function" && typeof readScheduleFromStorage === "function"){
+          setSchedule(readScheduleFromStorage());
+        }
+      }catch(_){}
+    };
   }
 
   // settings iç tabloları kur
@@ -3533,5 +3654,13 @@ btnWeekly.addEventListener("click", showWeekly);
 .noteDotBtn:focus{ outline: none; }
 .noteDotBtn:active{ transform: translateY(-50%) scale(0.96); }
 </style>
+
+<script>
+/* TIMEFMT_BOOT */
+document.addEventListener("DOMContentLoaded", function(){
+  try{ applyTimeFmtClass(); }catch(_{}){}
+});
+</script>
+
 </body>
 </html>
