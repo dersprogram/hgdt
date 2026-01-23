@@ -1410,6 +1410,40 @@ html.timefmt-range .tblTime{
 }
 </style>
 
+
+<style id="timefmt-colwidth-override">
+/* === Saat kolonu genişliği: formata göre dinamik === */
+:root{
+  --time-col-start: 5ch;   /* 08:15 */
+  --time-col-range: 11ch; /* 08:15-08:55 */
+}
+
+/* Varsayılan: range (giriş-çıkış) */
+.tblHead,
+.tblRow{
+  grid-template-columns: 34px 70px 1fr var(--time-col-range) !important;
+}
+
+/* Sadece giriş saati seçilince */
+html.timefmt-start .tblHead,
+html.timefmt-start .tblRow{
+  grid-template-columns: 34px 70px 1fr var(--time-col-start) !important;
+}
+
+/* Giriş–çıkış seçilince */
+html.timefmt-range .tblHead,
+html.timefmt-range .tblRow{
+  grid-template-columns: 34px 70px 1fr var(--time-col-range) !important;
+}
+
+/* Saat hücresi: taşma yapmasın */
+.tblTime{
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: clip;
+}
+</style>
+
 </head>
 <body>
 <div class="appFrame">
@@ -1512,18 +1546,40 @@ html.timefmt-range .tblTime{
 </div>
 </div>
 <div class="divider"></div>
+
 <div class="sectionGroup">
-<div class="sectionTitle">Sınıf / Ders Ekle</div>
-<div style="display:flex; gap:0.5rem; margin-bottom:1.5rem;">
-<input class="input" id="classInp" placeholder="9/A" style="width:4rem; height:40px"/>
-<input class="input" id="courseInp" placeholder="Ders adı" style="flex:1; height:40px"/>
-<button class="btn" id="addBtn" style="background:var(--orange); color:white; height:40px; padding:0 1rem">EKLE</button>
-</div>
-<div id="chipList" style="display:flex; flex-wrap:wrap; gap:0.4rem;"></div>
+  <div class="sectionTitle">Sınıf / Şube ve Ders Listeleri</div>
+
+  <div style="display:grid; grid-template-columns: 1fr; gap:0.75rem; margin-bottom: 0.75rem; width:100%;">
+    <!-- Sınıflar -->
+    <div class="field" style="padding:.75rem; width:100%;">
+      <div class="label" style="margin-bottom:.35rem;">Sınıf / Şube</div>
+      <div style="display:flex; gap:0.5rem;">
+        <input class="input" id="classOnlyInp" placeholder="9/A" style="width:5.2rem; height:40px"/>
+        <button class="btn" id="addClassBtn" style="background:var(--orange); color:white; height:40px; padding:0 1rem">EKLE</button>
+      </div>
+      <div id="classChipList" style="display:flex; flex-wrap:wrap; gap:0.4rem; margin-top:0.6rem;"></div>
+    </div>
+
+    <!-- Dersler -->
+    <div class="field" style="padding:.75rem; width:100%;">
+      <div class="label" style="margin-bottom:.35rem;">Ders</div>
+      <div style="display:flex; gap:0.5rem;">
+        <input class="input" id="courseOnlyInp" placeholder="Ders adı" style="flex:1; height:40px"/>
+        <button class="btn" id="addCourseBtn" style="background:var(--orange); color:white; height:40px; padding:0 1rem">EKLE</button>
+      </div>
+      <div id="courseChipList" style="display:flex; flex-wrap:wrap; gap:0.4rem; margin-top:0.6rem;"></div>
+    </div>
+  </div>
+
+  <div style="color:rgba(255,255,255,.55); font-weight:700; font-size:12px; line-height:1.25; margin-top:.1rem;">
+    Not: Sınıf ve dersleri ayrı ayrı ekleyebilirsin. Günlük programda sınıfı ve dersi listelerden seçersin.
+  </div>
 </div>
 <div class="divider"></div>
 <div class="sectionGroup">
-<div class="sectionTitle">Günlük Ders Programı</div>
+  <div class="sectionTitle">Günlük Ders Programı</div>
+
 <div style="display:flex; gap:0.5rem; margin-bottom:1rem;">
 <select class="input" id="daySelector" style="flex:1; height:40px"></select>
 <button class="btn" id="addRowBtn" style="background:var(--orange); color:white; height:40px; padding:0 1rem">+ SATIR</button>
@@ -1557,7 +1613,9 @@ html.timefmt-range .tblTime{
 const ALL_DAYS = ["Pazartesi","Salı","Çarşamba","Perşembe","Cuma","Cumartesi","Pazar"];
 const LS_SCHEDULE_KEY   = "dt_schedule_v1";     // { day: [{no,cls,les,time}, ...] }
 const LS_ACTIVE_DAYS_KEY= "dt_active_days_v1";  // ["Pazartesi","Çarşamba",...]
-const LS_ITEMS_KEY      = "dt_items";           // [{c,d}]
+const LS_ITEMS_KEY      = "dt_items";           // [LEGACY] [{c,d}] (geriye uyumluluk)
+const LS_CLASSES_KEY    = "dt_classes_v1";     // ["9/A","12/J",]
+const LS_COURSES_KEY    = "dt_courses_v1";     // ["Matematik","Kuran",]
 const LS_NOTES_KEY      = "dt_notes_v1";        // [{...}]
 const LS_TIME_FMT_KEY   = "dt_time_fmt_v1";     // "start" | "range"
 
@@ -1857,8 +1915,30 @@ document.getElementById("fsSelect").onchange = (e)=>{
   let timeOptions = [];
 let timeOptionsStart = [];
 let timeOptionsRange = [];
-  let items = loadJSON(LS_ITEMS_KEY, []); // [{c,d}]
-  if(!Array.isArray(items)) items = [];
+  
+  // --- Sınıf ve ders listeleri (ayrı) ---
+  // Eski sürümlerde "dt_items" içinde [{c,d}] tutuluyordu. Yeni sürümde:
+  //   dt_classes_v1 = ["9/A", ...]
+  //   dt_courses_v1 = ["Matematik", ...]
+  // İlk açılışta otomatik migration yapıyoruz.
+  let legacyItems = loadJSON(LS_ITEMS_KEY, []); // [LEGACY] [{c,d}]
+  if(!Array.isArray(legacyItems)) legacyItems = [];
+
+  let classesList = loadJSON(LS_CLASSES_KEY, []);
+  let coursesList = loadJSON(LS_COURSES_KEY, []);
+  if(!Array.isArray(classesList)) classesList = [];
+  if(!Array.isArray(coursesList)) coursesList = [];
+
+  // Migration: yeni listeler boşsa, legacy'den doldur
+  if((classesList.length === 0 && coursesList.length === 0) && legacyItems.length){
+    try{
+      classesList = [...new Set(legacyItems.map(x => (x && x.c ? String(x.c) : '').trim().toUpperCase()).filter(Boolean))];
+      coursesList = [...new Set(legacyItems.map(x => (x && x.d ? String(x.d) : '').trim()).filter(Boolean))];
+      saveJSON(LS_CLASSES_KEY, classesList);
+      saveJSON(LS_COURSES_KEY, coursesList);
+    }catch(e){}
+  }
+
 
   // SCHEDULE (canonical) buradan okunacak/yazılacak
   function getActiveDaysFromUI(){
@@ -1995,6 +2075,9 @@ const calculateTimes = () => {
     // Anasayfa/haftalık anında güncellensin
     try{ setSchedule(readScheduleFromStorage()); }catch(_){}
   }
+  // Expose for other scopes
+  try{ window.__convertAllScheduleTimes = convertAllScheduleTimes; }catch(_){}
+
 
   const saveCurrentDay = () => {
     const day = daySelector.value;
@@ -2029,8 +2112,8 @@ const calculateTimes = () => {
     const row = document.createElement('div');
     row.className = 'progRow';
     const num = progBody.children.length + 1;
-    const classes = [...new Set(items.map(x=>x.c))];
-    const courses = [...new Set(items.map(x=>x.d))];
+    const classes = [...new Set((classesList||[]).map(v=>String(v).trim().toUpperCase()).filter(Boolean))];
+    const courses = [...new Set((coursesList||[]).map(v=>String(v).trim()).filter(Boolean))];
 
     row.innerHTML = `
       <div class="lessonTag">${num}</div>
@@ -2083,41 +2166,105 @@ const calculateTimes = () => {
     document.getElementById(id).addEventListener('input', calculateTimes);
   });
 
-  const renderChips = () => {
-    document.getElementById('chipList').innerHTML = items.map((it, i) => `
-      <div class="input" style="display:flex; align-items:center; gap:0.5rem; padding:0.2rem 0.5rem; font-size:0.75rem">
-        <b>${it.c}</b> ${it.d} <span style="cursor:pointer; color:red" data-del="${i}">✕</span>
-      </div>`
-    ).join('');
+  
+  const normClass = (v)=> (String(v||'').trim().toUpperCase());
+  const normCourse = (v)=> (String(v||'').trim());
 
-    // delete handlers
-    document.querySelectorAll('#chipList [data-del]').forEach(sp=>{
+  const renderClassChips = () => {
+    const host = document.getElementById('classChipList');
+    if(!host) return;
+    const arr = [...new Set((classesList||[]).map(normClass).filter(Boolean))];
+    classesList = arr;
+    saveJSON(LS_CLASSES_KEY, classesList);
+
+    host.innerHTML = arr.map((c, i) => `
+      <div class="input" style="display:flex; align-items:center; gap:0.5rem; padding:0.2rem 0.55rem; font-size:0.75rem; white-space:nowrap;">
+        <b>${c}</b>
+        <span style="cursor:pointer; color:red; font-weight:900" data-cls-del="${i}" title="Sil">✕</span>
+      </div>
+    `).join('');
+
+    host.querySelectorAll('[data-cls-del]').forEach(sp=>{
       sp.onclick = () => {
-        const idx = Number(sp.getAttribute('data-del'));
-        items.splice(idx,1);
-        saveJSON(LS_ITEMS_KEY, items);
-        renderChips();
+        const idx = Number(sp.getAttribute('data-cls-del'));
+        classesList.splice(idx, 1);
+        saveJSON(LS_CLASSES_KEY, classesList);
+        renderClassChips();
+        refreshSelects();
       };
     });
-
-    refreshSelects();
   };
 
-  document.getElementById('addBtn').onclick = () => {
-    const c = (document.getElementById('classInp').value || "").trim().toUpperCase();
-    const d = (document.getElementById('courseInp').value || "").trim();
-    if(c && d){
-      items.push({c, d});
-      saveJSON(LS_ITEMS_KEY, items);
-      renderChips();
-      document.getElementById('classInp').value='';
-      document.getElementById('courseInp').value='';
-    }
+  const renderCourseChips = () => {
+    const host = document.getElementById('courseChipList');
+    if(!host) return;
+    const arr = [...new Set((coursesList||[]).map(normCourse).filter(Boolean))];
+    coursesList = arr;
+    saveJSON(LS_COURSES_KEY, coursesList);
+
+    host.innerHTML = arr.map((d, i) => `
+      <div class="input" style="display:flex; align-items:center; gap:0.5rem; padding:0.2rem 0.55rem; font-size:0.75rem; white-space:nowrap;">
+        ${d}
+        <span style="cursor:pointer; color:red; font-weight:900" data-crs-del="${i}" title="Sil">✕</span>
+      </div>
+    `).join('');
+
+    host.querySelectorAll('[data-crs-del]').forEach(sp=>{
+      sp.onclick = () => {
+        const idx = Number(sp.getAttribute('data-crs-del'));
+        coursesList.splice(idx, 1);
+        saveJSON(LS_COURSES_KEY, coursesList);
+        renderCourseChips();
+        refreshSelects();
+      };
+    });
   };
 
-  const refreshSelects = () => {
-    const classes = [...new Set(items.map(x=>x.c))];
-    const courses = [...new Set(items.map(x=>x.d))];
+  // Ekle butonları
+  const addClassBtn = document.getElementById('addClassBtn');
+  if(addClassBtn){
+    addClassBtn.onclick = () => {
+      const c = normClass(document.getElementById('classOnlyInp')?.value);
+      if(!c) return;
+      if(!classesList.includes(c)) classesList.push(c);
+      saveJSON(LS_CLASSES_KEY, classesList);
+      if(document.getElementById('classOnlyInp')) document.getElementById('classOnlyInp').value = '';
+      renderClassChips();
+      refreshSelects();
+    };
+  }
+
+  const addCourseBtn = document.getElementById('addCourseBtn');
+  if(addCourseBtn){
+    addCourseBtn.onclick = () => {
+      const d = normCourse(document.getElementById('courseOnlyInp')?.value);
+      if(!d) return;
+      if(!coursesList.includes(d)) coursesList.push(d);
+      saveJSON(LS_COURSES_KEY, coursesList);
+      if(document.getElementById('courseOnlyInp')) document.getElementById('courseOnlyInp').value = '';
+      renderCourseChips();
+      refreshSelects();
+    };
+  }
+
+
+  
+const refreshSelects = () => {
+    // Listeler + mevcut satırlarda seçili olan değerler (kaybolmasın)
+    const clsSet = new Set((classesList||[]).map(v=>String(v).trim().toUpperCase()).filter(Boolean));
+    const crsSet = new Set((coursesList||[]).map(v=>String(v).trim()).filter(Boolean));
+
+    progBody.querySelectorAll('.progRow').forEach(r => {
+      const sels = r.querySelectorAll('select');
+      const curCls = (sels[0]?.value || '').trim();
+      const curCrs = (sels[1]?.value || '').trim();
+      if(curCls) clsSet.add(curCls.toUpperCase());
+      if(curCrs) crsSet.add(curCrs);
+    });
+
+    const classes = [...clsSet];
+    const courses = [...crsSet];
+
     progBody.querySelectorAll('.progRow').forEach(r => {
       const sels = r.querySelectorAll('select');
       const v0 = sels[0].value, v1 = sels[1].value, v2 = sels[2].value;
@@ -2126,6 +2273,7 @@ const calculateTimes = () => {
       sels[0].value = v0; sels[1].value = v1; sels[2].value = v2;
     });
   };
+
 
   document.getElementById('addRowBtn').onclick = () => { addRow(); saveCurrentDay(); };
 
@@ -2146,7 +2294,8 @@ const calculateTimes = () => {
   // dışarı açılan init fonksiyonu
   window.__settingsInit = function(){
     calculateTimes();
-    renderChips();
+    renderClassChips();
+    renderCourseChips();
     updateDaySelector();
   };
 })();
@@ -2203,26 +2352,24 @@ function initSettingsFromStorage(){
     fmtSel.onchange = ()=>{
       const v = (fmtSel.value === "start") ? "start" : "range";
       setTimeFmt(v);
+
+      // html class'ı anında uygula (font/biçim)
       try{ applyTimeFmtClass(); }catch(_){}
 
-      // Saat seçeneklerini + kayıtları dönüştür
-      try{ convertAllScheduleTimes(v); }catch(_){}
+      // kayıtlı schedule saatlerini dönüştür + seçenek listesini güncelle
+      try{ if(window.__convertAllScheduleTimes) window.__convertAllScheduleTimes(v); }catch(_){ }
       try{ calculateTimes(); }catch(_){}
 
-      // Ayarlar içindeki günlük program tablosunu anında tazele
+      // ✅ Ayarlar içindeki günlük program bölümünü kapatmadan anında yenile (scope sorununu aşmak için)
       try{
-        const ds = document.getElementById("daySelector");
-        if(ds && typeof loadSchedule === "function"){
-          loadSchedule(ds.value || (ds.options && ds.options[0] ? ds.options[0].value : ""));
+        if(typeof window.__settingsInit === "function"){
+          window.__settingsInit(); // calculateTimes + updateDaySelector + loadSchedule
         }
       }catch(_){}
 
-      // Anasayfayı anında tazele
-      try{
-        if(typeof setSchedule === "function" && typeof readScheduleFromStorage === "function"){
-          setSchedule(readScheduleFromStorage());
-        }
-      }catch(_){}
+      // ✅ Anasayfa görünümü kapalı olsa bile, kapatınca doğru gelsin diye class zaten güncel.
+      // İstersen anında da güncellemek için sadece renderDays çağır (global ise)
+      try{ if(typeof renderDays === "function") renderDays(); }catch(_){}
     };
   }
 
