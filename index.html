@@ -1389,24 +1389,15 @@ html{ font-size: 14px !important; }
 
 
 <style>
-/* TIMEFMT_TBLTIME_OVERRIDES */
-/* Varsayılan .tblTime dosyada range gibi küçük tanımlı. Tek giriş seçilince büyütüyoruz. */
-html.timefmt-start .tblTime{
-  font-family: inherit !important;
-  font-variant-numeric: normal !important;
-  letter-spacing: 0 !important;
-  font-weight: 800 !important;
-  font-size: 1rem !important;          /* ders ismiyle aynı */
-  color: rgba(255,255,255,.78) !important;
-}
-/* Range seçilince dosyadaki mevcut küçük/monospace görünüm zaten uygun; yine de garanti edelim */
+/* TIMEFMT_TBLTIME_OVERRIDES — sıkı, ince ve net saat */
+html.timefmt-start .tblTime,
 html.timefmt-range .tblTime{
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
-  font-variant-numeric: tabular-nums !important;
-  letter-spacing: .06em !important;
-  font-weight: 700 !important;
-  font-size: .65rem !important;        /* 2 kademe küçük */
-  color: rgba(210,225,245,.55) !important;
+  font-family: inherit !important;
+  font-variant-numeric: tabular-nums !important; /* rakamlar hizalı */
+  letter-spacing: -0.02em !important;             /* ✅ biraz sıkı */
+  font-weight: 500 !important;                    /* ince ama net */
+  font-size: 1rem !important;                     /* boyut aynı */
+  color: rgba(235,240,255,.85) !important;        /* netlik */
 }
 </style>
 
@@ -2326,13 +2317,22 @@ function initSettingsFromStorage(){
   // tema + font boyutu
 
   let fs = localStorage.getItem("dt_fs_base");
-  if(!fs) fs = "14px";
-  try{ if(fs && fs.trim().startsWith("\"")) fs = JSON.parse(fs); }catch(e){}
-  document.documentElement.style.setProperty("--fs-base", fs);
-  const fsSel = document.getElementById("fsSelect");
-  if(fsSel) fsSel.value = fs;
-  // tüm sayfalara uygula
-  applyGlobalTextSizetSize(fs);
+if(!fs) fs = "14px";
+try{ if(fs && fs.trim().startsWith("\"")) fs = JSON.parse(fs); }catch(e){}
+
+// Eski kayıtlardan (18px/20px vb.) gelen değerleri güvenli aralığa yuvarla (12/14/16)
+const fsp = parseFloat(String(fs).replace(/[^0-9.]/g, "")) || 14;
+if(fsp <= 12) fs = "12px";
+else if(fsp >= 16) fs = "16px";
+else fs = "14px";
+
+localStorage.setItem("dt_fs_base", fs);
+document.documentElement.style.setProperty("--fs-base", fs);
+const fsSel = document.getElementById("fsSelect");
+if(fsSel) fsSel.value = fs;
+
+// tüm sayfalara uygula
+applyGlobalTextSizetSize(fs);
 
   // aktif günleri UI'ya yansıt
   const savedDays = loadJSON(LS_ACTIVE_DAYS_KEY, [...ALL_DAYS]);
